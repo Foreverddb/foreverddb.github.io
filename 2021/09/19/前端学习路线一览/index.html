@@ -178,13 +178,13 @@
 <h2 id="从-HTML-开始"><a href="#从-HTML-开始" class="headerlink" title="从 HTML 开始"></a>从 HTML 开始</h2><p><strong>HTML</strong> 是一种标记语言，算不上编程语言，大概就跟 Markdown 类似，是用来标识排版的语法，所以也非常简单。</p>
 <p>HTML 是 web 前端的基础，基本上学会几个html标签就能够编写基本的网页结构了。</p>
 <p>譬如下面是一个网页的主要 HTML 内容：</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">       这是一个网页。 </span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">       这是另一行字。</span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span>&gt;</span></span><br><span class="line">        这是一个按钮</span><br><span class="line">    <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">       这是一行字。 </span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">       这是另一行字。</span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span>&gt;</span></span><br><span class="line">        这是一个按钮</span><br><span class="line">    <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
 <p>上面显示效果如下</p>
 <blockquote>
 <div>
     <p>
-       这是一个网页。 
+       这是一行字。 
     </p>
     <p>
        这是另一行字。
@@ -201,7 +201,20 @@
 <p>如下，只需要这样写，就能让 HTML 的文字变为红色。</p>
 <figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">p</span> &#123;</span><br><span class="line">    <span class="attribute">color</span>: red;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<p>美化后示例如下。</p>
+<blockquote>
+<div>
+    <p style='color:red;'>这是一行字。</p>
+    <p style='color:red;'>
+        这是另一行字。
+    </p>
+    <button>
+        这是一个按钮
+    </button>
+</div>
+</blockquote>
 <p>语法是不是很简单？学会 CSS之后就能实现更多更为炫酷的效果，甚至直接用 CSS 做 3D 动画都没有问题。</p>
+<p>可以看看这个链接 <a target="_blank" rel="noopener" href="https://tangdingga1.github.io/first-Step-Of-My-Programmer-life/bilibili.html">https://tangdingga1.github.io/first-Step-Of-My-Programmer-life/bilibili.html</a> 里的实例，纯粹用 HTML 和 CSS 写了一个 B 站首页，当然意味着没有其他功能，只是一个好看的页面，不过这也足够展现出 CSS 的能力了。</p>
 <p>CSS 也很推荐在菜鸟教程上学习：<a target="_blank" rel="noopener" href="https://www.runoob.com/css/css-tutorial.html">https://www.runoob.com/css/css-tutorial.html</a></p>
 <p><strong>TASK：</strong>学了 CSS 可以尝试做一个你觉得好看的页面吧！可以试着做一个百度首页（不要求实现搜索和动态功能，只要长得一样就行）。</p>
 <h2 id="JavaScript-是万能的脚本"><a href="#JavaScript-是万能的脚本" class="headerlink" title="JavaScript 是万能的脚本"></a>JavaScript 是万能的脚本</h2><p>当你点击按钮后会发生什么？譬如在一个网页的注册界面，你点击提交按钮后会发生什么？</p>
@@ -219,6 +232,15 @@
 <p>效果如下：</p>
 <p><button onclick="javascript:alert('我是提示框！');">点我查看效果</button></p>
 <p>JS 和网页各种元素能够很好地配合，它能对网页进行各种操作。譬如我们经常用到的各种网页抢票脚本什么的都是用 JS 写的。其原理都是用 JS 来操作 HTML 元素和 CSS 内容。</p>
+<p>这里有个简单示例：JS 操作 HTML 元素，点击下面按钮，即可使其上方文字变为绿色。</p>
+<div>
+    <p id="test-text" style='color:red;'>这是一行字。<br>这是另一行字。</p>
+    <button onclick="javascript:document.getElementById('test-text').style.color='green';">
+        点我变绿
+    </button>
+</div>
+
+
 <p>学会 JS 还能动态地修改页面，还能实现性能的提升。比如 <em>懒加载</em>：加载一个网页时并不一次性把所有内容加载完，而是你滑到什么地方就加载什么地方的东西，这样可以减少流量消耗和服务器负担（比如有的人就点进网页一瞬间就退出了，却加载完了整个页面，这岂不是很亏流量？）。</p>
 <p>JS 也同样推荐在菜鸟教程上学习：<a target="_blank" rel="noopener" href="https://www.runoob.com/js/js-tutorial.html">https://www.runoob.com/js/js-tutorial.html</a></p>
 <p>不过这时候你也该会用 MDN 学习了：<a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript</a></p>
