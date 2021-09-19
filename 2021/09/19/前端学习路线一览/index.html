@@ -164,9 +164,9 @@
             </div>
             <!-- Post -->
             <div class="typo" style="padding: 3rem;">
-                <p>前端是主要处理页面样式及其与用户交互的一个方向，相对于后端学习，前端学习是一个可视化的过程，因为前端的实践常常是打下代码就可以直接在页面上看出来效果。同时，前端学习入门相对简单，一天的简单阅读 HTML 文档就可以做出一个好看的网页，这对激励下一步学习是很有帮助的。以我经历来看，先学习 web 前端，在实践中逐渐理解浏览器的运作机理（因为前端学习一般是不会让人感到枯燥的），然后对于后端和前端进一步学习都可以起一个引导作用。</p>
-<h2 id="关于本文"><a href="#关于本文" class="headerlink" title="关于本文"></a>关于本文</h2><p>本文适用于前端小白，给小白们构建了一条比较合适的学习路线，每个学习节点末尾都给了一个 TASK ，可以根据  TASK 来进行实践，这样对于能力是最好的锻炼。</p>
-<p>前端学习不建议学完一个再学下一个，因为很多内容都是层层关联的。所以学了一部分 HTML 后建议可以马上先学习 CSS ，然后可以并行学习 Javascript，这样可以学习三者结合，更能理解前端运作方式。</p>
+                <p><strong>前端是主要处理页面样式及其与用户交互的一个方向，相对于后端学习，前端学习是一个可视化的过程，因为前端的实践常常是打下代码就可以直接在页面上看出来效果。同时，前端学习入门相对简单，一天的简单阅读 HTML 文档就可以做出一个好看的网页，这对激励下一步学习是很有帮助的。以我经历来看，先学习 web 前端，在实践中逐渐理解浏览器的运作机理（因为前端学习一般是不会让人感到枯燥的），然后对于后端和前端进一步学习都可以起一个引导作用。</strong></p>
+<h2 id="关于本文"><a href="#关于本文" class="headerlink" title="关于本文"></a>关于本文</h2><p><strong>本文适用于前端小白，给小白们构建了一条比较合适的学习路线，每个学习节点末尾都给了一个 TASK ，可以根据  TASK 来进行实践，这样对于能力是最好的锻炼。</strong></p>
+<p><strong>前端学习不建议学完一个再学下一个，因为很多内容都是层层关联的。所以学了一部分 HTML 后建议可以马上先学习 CSS ，然后可以并行学习 Javascript，这样可以学习三者结合，更能理解前端运作方式。</strong></p>
 <h2 id="学习网站"><a href="#学习网站" class="headerlink" title="学习网站"></a>学习网站</h2><p>前端学习网站当然强推万能的 MDN：<a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web">https://developer.mozilla.org/zh-CN/docs/Web</a></p>
 <p>但是感觉 MDN 的中文不太那么让人能读懂，所以初学者可以看菜鸟教程：<a target="_blank" rel="noopener" href="https://www.runoob.com/">https://www.runoob.com/</a></p>
 <h2 id="学习资料"><a href="#学习资料" class="headerlink" title="学习资料"></a>学习资料</h2><p>我在网络上放了一些学习书籍，想要深入系统地学习前端可以下载来看一看，对于初学者建议用上面学习网站学习。</p>
@@ -231,6 +231,11 @@
 
 <p>效果如下：</p>
 <p><button onclick="javascript:alert('我是提示框！');">点我查看效果</button></p>
+<p>同样很简单地能用一行代码显示一个输入框：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">prompt(<span class="string">&#x27;请输入您的年龄&#x27;</span>,<span class="string">&#x27;默认还没出生&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>效果如下：</p>
+<p><button onclick="javascript:prompt('请输入您的年龄','默认还没出生');">点我查看效果</button></p>
 <p>JS 和网页各种元素能够很好地配合，它能对网页进行各种操作。譬如我们经常用到的各种网页抢票脚本什么的都是用 JS 写的。其原理都是用 JS 来操作 HTML 元素和 CSS 内容。</p>
 <p>这里有个简单示例：JS 操作 HTML 元素，点击下面按钮，即可使其上方文字变为绿色。</p>
 <div>
@@ -239,7 +244,9 @@
         点我变绿
     </button>
 </div>
+这个示例同样很简单，只需要三行代码就能实现：
 
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">&#x27;button-id&#x27;</span>).addEventListener(<span class="string">&#x27;click&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">document</span>.getElementById(<span class="string">&#x27;text-id&#x27;</span>).style.color = <span class="string">&#x27;green&#x27;</span>;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
 <p>学会 JS 还能动态地修改页面，还能实现性能的提升。比如 <em>懒加载</em>：加载一个网页时并不一次性把所有内容加载完，而是你滑到什么地方就加载什么地方的东西，这样可以减少流量消耗和服务器负担（比如有的人就点进网页一瞬间就退出了，却加载完了整个页面，这岂不是很亏流量？）。</p>
 <p>JS 也同样推荐在菜鸟教程上学习：<a target="_blank" rel="noopener" href="https://www.runoob.com/js/js-tutorial.html">https://www.runoob.com/js/js-tutorial.html</a></p>
