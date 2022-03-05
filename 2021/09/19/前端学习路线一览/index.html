@@ -182,7 +182,17 @@
 <h2 id="从-HTML-开始"><a href="#从-HTML-开始" class="headerlink" title="从 HTML 开始"></a>从 HTML 开始</h2><p><strong>HTML</strong> 是一种标记语言，算不上编程语言，大概就跟 Markdown 类似，是用来标识排版的语法，所以也非常简单。</p>
 <p>HTML 是 web 前端的基础，基本上学会几个html标签就能够编写基本的网页结构了。</p>
 <p>譬如下面是一个网页的主要 HTML 内容：</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">       这是一行字。 </span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">       这是另一行字。</span><br><span class="line">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span>&gt;</span></span><br><span class="line">        这是一个按钮</span><br><span class="line">    <span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span><span class="token punctuation">></span></span>
+	<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span>
+       这是一行字。 
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span>
+       这是另一行字。
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span><span class="token punctuation">></span></span>
+        这是一个按钮
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>上面显示效果如下</p>
 <blockquote>
@@ -203,7 +213,9 @@
 <h2 id="用-CSS-来修饰一下"><a href="#用-CSS-来修饰一下" class="headerlink" title="用 CSS 来修饰一下"></a>用 CSS 来修饰一下</h2><p>CSS 就是用来美化界面的，而且语法同样简单，基本上属于是这样一个结构：</p>
 <p><code>你要美化的那个元素：你要的样式</code></p>
 <p>如下，只需要这样写，就能让 HTML 的文字变为红色。</p>
-<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">p</span> &#123;</span><br><span class="line">    <span class="attribute">color</span>: red;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-css" data-language="css"><code class="language-css"><span class="token selector">p</span> <span class="token punctuation">&#123;</span>
+    <span class="token property">color</span><span class="token punctuation">:</span> red<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p>美化后示例如下。</p>
 <blockquote>
@@ -231,12 +243,12 @@
 </ul>
 <p>这 <strong>某种方式</strong> 就是靠 <strong>JavaScript（简称 JS）</strong> 来实现的。JS 是一种依赖于浏览器的脚本语言，它和 C语言，JAVA等都是<em>高级程序设计语言</em>，这意味着 JS 可以实现很多其他语言同样能实现的功能。同时由于它是脚本语言，不需要想其他语言那样复杂的编译环境什么的配置<strong>，只要你有浏览器，JS 就能运行</strong>！</p>
 <p>相对前面提到的两者， JS 要难一点，但是也是比较简单的一门语言。它不需要 C语言之类的语言那样开始需要引入一堆库和函数。如下，只需要短短一行就能在浏览器弹出一个提示框：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">alert(<span class="string">&quot;我是提示框！&quot;</span>);</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token function">alert</span><span class="token punctuation">(</span><span class="token string">"我是提示框！"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>效果如下：</p>
 <p><button onclick="javascript:alert('我是提示框！');">点我查看效果</button></p>
 <p>同样很简单地能用一行代码显示一个输入框：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">prompt(<span class="string">&#x27;请输入您的年龄&#x27;</span>,<span class="string">&#x27;默认还没出生&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token function">prompt</span><span class="token punctuation">(</span><span class="token string">'请输入您的年龄'</span><span class="token punctuation">,</span><span class="token string">'默认还没出生'</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>效果如下：</p>
 <p><button onclick="javascript:prompt('请输入您的年龄','默认还没出生');">点我查看效果</button></p>
@@ -250,7 +262,9 @@
 </div>
 这个示例同样很简单，只需要三行代码就能实现：
 
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">&#x27;button-id&#x27;</span>).addEventListener(<span class="string">&#x27;click&#x27;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">document</span>.getElementById(<span class="string">&#x27;text-id&#x27;</span>).style.color = <span class="string">&#x27;green&#x27;</span>;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript">document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'button-id'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+    document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">'text-id'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>style<span class="token punctuation">.</span>color <span class="token operator">=</span> <span class="token string">'green'</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p>学会 JS 还能动态地修改页面，还能实现性能的提升。比如 <em>懒加载</em>：加载一个网页时并不一次性把所有内容加载完，而是你滑到什么地方就加载什么地方的东西，这样可以减少流量消耗和服务器负担（比如有的人就点进网页一瞬间就退出了，却加载完了整个页面，这岂不是很亏流量？）。</p>
 <p>JS 也同样推荐在菜鸟教程上学习：<a target="_blank" rel="noopener" href="https://www.runoob.com/js/js-tutorial.html">https://www.runoob.com/js/js-tutorial.html</a></p>
