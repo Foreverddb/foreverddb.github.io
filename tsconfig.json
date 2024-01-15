@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "strict": true,
+        "jsx": "preserve",
+        "importHelpers": true,
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "sourceMap": true,
+        "baseUrl": ".",
+        "resolveJsonModule": true,
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "allowJs": true,
+    },
+    "include": [
+        "docs/**/*.ts",
+        "docs/**/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

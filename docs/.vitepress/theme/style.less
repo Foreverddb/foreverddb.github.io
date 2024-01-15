@@ -1,0 +1,199 @@
+:root {
+    --vp-c-default-1: var(--vp-c-gray-1);
+    --vp-c-default-2: var(--vp-c-gray-2);
+    --vp-c-default-3: var(--vp-c-gray-3);
+    --vp-c-default-soft: var(--vp-c-gray-soft);
+
+    --vp-c-brand-1: var(--vp-c-red-3);
+    --vp-c-brand-2: var(--vp-c-red-2);
+    --vp-c-brand-3: var(--vp-c-red-1);
+    --vp-c-brand-soft: var(--vp-c-red-soft);
+
+    --vp-c-tip-1: var(--vp-c-brand-1);
+    --vp-c-tip-2: var(--vp-c-brand-2);
+    --vp-c-tip-3: var(--vp-c-brand-3);
+    --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+    --vp-c-warning-1: var(--vp-c-yellow-1);
+    --vp-c-warning-2: var(--vp-c-yellow-2);
+    --vp-c-warning-3: var(--vp-c-yellow-3);
+    --vp-c-warning-soft: var(--vp-c-yellow-soft);
+
+    --vp-c-danger-1: var(--vp-c-red-1);
+    --vp-c-danger-2: var(--vp-c-red-2);
+    --vp-c-danger-3: var(--vp-c-red-3);
+    --vp-c-danger-soft: var(--vp-c-red-soft);
+}
+
+/**
+ * Component: Button
+ * -------------------------------------------------------------------------- */
+
+:root {
+    --vp-button-brand-border: transparent;
+    --vp-button-brand-text: var(--vp-c-white);
+    //--vp-button-brand-bg: #f998a6;
+    --vp-button-brand-bg: transparent;
+
+    --vp-button-brand-hover-bg: transparent;
+    --vp-button-brand-hover-border: transparent;
+    --vp-button-brand-hover-text: var(--vp-c-white);
+    --vp-button-brand-active-border: transparent;
+    --vp-button-brand-active-text: var(--vp-c-white);
+    --vp-button-brand-active-bg: var(--vp-c-brand-1);
+    --vp-button-alt-bg: #62a5d7;
+    --vp-button-alt-text: #fff;
+}
+
+/**
+ * Component: Home
+ * -------------------------------------------------------------------------- */
+
+:root {
+    --vp-home-hero-name-color: transparent;
+    --vp-home-hero-name-background: -webkit-linear-gradient(-45deg, #f998a6 30%, #62a5d7);
+    --vp-home-hero-image-background-image: linear-gradient(-45deg, #f998a6 30%, #62a5d7);
+
+    --vp-home-hero-image-filter: blur(44px);
+}
+
+@media (min-width: 640px) {
+    :root {
+        --vp-home-hero-image-filter: blur(56px);
+    }
+}
+
+@media (min-width: 960px) {
+    :root {
+        --vp-home-hero-image-filter: blur(68px);
+    }
+}
+
+/**
+ * Component: Custom Block
+ * -------------------------------------------------------------------------- */
+
+:root {
+    --vp-custom-block-tip-border: transparent;
+    --vp-custom-block-tip-text: var(--vp-c-text-1);
+    --vp-custom-block-tip-bg: var(--vp-c-brand-soft);
+    --vp-custom-block-tip-code-bg: var(--vp-c-brand-soft);
+}
+
+/**
+ * Component: Algolia
+ * -------------------------------------------------------------------------- */
+
+.DocSearch {
+    --docsearch-primary-color: var(--vp-c-brand-1) !important;
+}
+
+.container {
+    //.main {
+    //    order: 1;
+    //}
+    //
+    //.image {
+    //    order: 0;
+    //}
+}
+
+.VPButton.brand {
+    position: relative;
+    overflow: hidden;
+    background-color: transparent !important;
+
+    &::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        background-color: #f998a6;
+        z-index: -1;
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 100%;
+        left: 0;
+        top: 0;
+        background: linear-gradient(-45deg, #a086ef 20%, #f67587);
+        clip-path: polygon(
+            0 0,
+            100% 0,
+            calc(100% - 15px) 100%,
+            0 100%
+        );
+        z-index: -1;
+        transition: 0.5s all ease-in-out;
+        filter: blur(15px);
+    }
+
+    &:active {
+        background: linear-gradient(-45deg, #96b1ea 20%, #d568c0) !important;
+    }
+
+    &:hover {
+        &::after {
+            width: calc(100% + 15px);
+        }
+    }
+}
+
+.VPButton.alt {
+    color: white !important;
+
+    &:hover {
+        background-color: #2c80c0 !important;
+    }
+
+    &:active {
+        background-color: #045da0 !important;
+    }
+}
+
+
+.VPLink.link.VPFeature {
+    position: relative;
+    transition: 0.7s all ease-in-out;
+    overflow: hidden;
+
+    &::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 100%;
+        left: 0;
+        top: 0;
+        background: rgba(217, 147, 147, 0.1);
+        clip-path: polygon(
+                0 0,
+                100% 0,
+                calc(100% - 20px) 100%,
+                0 100%
+        );
+        z-index: -1;
+        transition: 0.6s all ease-in-out;
+    }
+
+    &:hover {
+        background: transparent;
+        box-shadow: 2px 4px 3px rgba(0,0,0,0.2);
+        border-color: #e97171 !important;
+
+        &::after {
+            width: calc(100% + 20px);
+        }
+    }
+}
+
+
+.DocSearch.DocSearch-Button {
+    background: transparent !important;
+}
+
+
