@@ -15,13 +15,14 @@
         "resolveJsonModule": true,
         "lib": [
             "esnext",
-            "dom"
+            "dom",
         ],
         "allowJs": true,
     },
     "include": [
         "docs/**/*.ts",
-        "docs/**/*.d.ts"
+        "docs/**/*.d.ts",
+        "doc/**/*.vue",
     ],
     "exclude": [
         "node_modules"

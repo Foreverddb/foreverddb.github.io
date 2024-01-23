@@ -4,7 +4,9 @@
 
 <template>
     <div class="container">
-        <p v-for="i in 2"
+        <p
+            v-for="i in 2"
+            :key="i"
         >
             Poppin'Party is a Japanese all-female band that was formed in 2015 as part of Bushiroad's media franchise BanG Dream!. The group's members are voice actresses who portray fictional characters
             in the franchise's anime series and mobile game BanG Dream! Girls Band Party!.
