@@ -28,6 +28,9 @@ const TAG_COLORS = [
           {{ data.brief }}
       </article>
       <div class="tags">
+          <div v-if="data.category" class="category">
+              {{ data.category }}
+          </div>
           <div v-for="(tag, index) in data.tags"
                class="tag"
                :style="{
@@ -43,11 +46,11 @@ const TAG_COLORS = [
 
 <style lang="less" scoped>
 .blog-card {
-    max-width: 750px;
+    max-width: 767px;
     min-width: 300px;
     width: 100%;
     margin: 15px 0;
-    background: var(--vp-c-bg);
+    //background: var(--vp-c-bg);
     border: 1px var(--vp-c-gray-1) solid;
     padding: 15px 20px;
     border-radius: 8px;

@@ -6,6 +6,11 @@ export interface TimeLine {
     frequency: number;
 }
 
+export interface Category {
+    name: string;
+    frequency: number;
+}
+
 export interface BlogDataItem {
     url: string;
     frontmatter: Record<string, string>;
@@ -20,7 +25,7 @@ export interface BlogData {
     tags: string[];
     timeLine: TimeLine[];
     data: BlogDataItem[];
-    categories: string[];
+    categories: Category[];
 }
 
 export function formatDate(date: string, timeType: 'year' | 'month') {
@@ -33,7 +38,7 @@ export function formatDate(date: string, timeType: 'year' | 'month') {
 
 export function formatData(data: ContentData[], timeType: 'year' | 'month'): BlogData {
     const tagSet = new Set<string>();
-    const categorySet = new Set<string>();
+    const categoryMap = new Map<string, number>();
     const timeMap = new Map<string, number>();
 
     const dataList = data.filter((item) => /.html/.test(item.url) && !item.frontmatter.hidden)
@@ -53,7 +58,11 @@ export function formatData(data: ContentData[], timeType: 'year' | 'month'): Blo
                 timeMap.set(dateObj.timeline, (timeMap.get(dateObj.timeline) || 0) + 1);
             }
 
-            categorySet.add(frontmatter.category || '');
+            if (!categoryMap.has(frontmatter.category)) {
+                categoryMap.set(frontmatter.category, 1);
+            } else {
+                categoryMap.set(frontmatter.category, (categoryMap.get(frontmatter.category) || 0) + 1);
+            }
 
             return {
                 url,
@@ -78,6 +87,11 @@ export function formatData(data: ContentData[], timeType: 'year' | 'month'): Blo
         tags: Array.from(tagSet),
         timeLine: timeList.sort((a, b) => dayjs(a.time).unix() - dayjs(b.time).unix()),
         data: dataList,
-        categories: Array.from(categorySet),
+        categories: Array.from(categoryMap.keys()).map((key) => {
+            return {
+                name: key || '',
+                frequency: categoryMap.get(key) || 0,
+            };
+        }),
     };
 }
