@@ -62,12 +62,23 @@ const tagsFilter = computed(() => {
         }
     };
 });
+function handleTagSelected(tag: string) {
+    if (tagsSelected.value.includes(tag)) {
+        tagsSelected.value = tagsSelected.value.filter((value) => value !== tag);
+    } else {
+        tagsSelected.value.push(tag);
+    }
+}
 
 const blogs = computed(() => {
     return data.data
         .filter(categoryFilter.value)
         .filter(dateFilter.value)
         .filter(tagsFilter.value);
+});
+
+const colors = Array.from(new Array(data.tags.length), () => {
+    return `hsl(${Math.random() * 360}, 60%, 60%)`;
 });
 
 onMounted(() => {
@@ -90,7 +101,7 @@ onMounted(() => {
             </div>
             <BlogCard
                 v-for="blog in blogs"
-                :key="blog"
+                :key="blog.url"
                 :data="blog"
             />
         </main>
@@ -116,11 +127,11 @@ onMounted(() => {
                     按{{ isByTime ? '类型' : '时间' }}
                 </div>
             </div>
-            <div class="category-container">
+            <div class="categories-container">
                 <template v-if="!isByTime">
                     <CategoryCard
                         v-for="category in data.categories"
-                        :key="category"
+                        :key="category.name"
                         :category="category.name || '未分类'"
                         :frequency="category.frequency"
                         @click="handleClickCategory(category.name)"
@@ -139,7 +150,21 @@ onMounted(() => {
                 </template>
             </div>
             <div class="tags-container">
-                111
+                <div class="tags-header">标签</div>
+                <div class="tags">
+                    <div
+                        class="tag"
+                        v-for="(tag, index) in data.tags"
+                        :class="(tagsSelected.length && !tagsSelected.includes(tag)) ? 'unselected' : ''"
+                        :style="{
+                            '--tag-bg-color': (tagsSelected.length && !tagsSelected.includes(tag)) ? 'gray' : colors[index],
+                            animationDelay: `${(Math.floor(index / 4) * Math.random() * 1.2  + 0.5).toFixed(2)}s`,
+                        }"
+                        @click="handleTagSelected(tag)"
+                    >
+                        {{tag}}
+                    </div>
+                </div>
             </div>
         </aside>
     </div>
@@ -319,12 +344,55 @@ header {
         width: 100%;
         flex: 2;
 
-        .category-container {
-
+        .categories-container {
+            padding: 0 0 5px 0;
+            border-left: 2px transparent solid;
+            border-right: 2px transparent solid;
+            border-bottom: 3px solid var(--vp-c-sponsor);
         }
 
         .tags-container {
             margin: 10px 0;
+
+            .tags {
+                display: flex;
+                flex-wrap: wrap;
+                width: 100%;
+                color: white;
+                font-weight: 600;
+
+                .tag {
+                    padding: 2px 5px;
+                    margin: 3px 5px;
+                    animation: 1s forwards fallDown ease-in-out;
+                    border-radius: 6px;
+                    transform: translateY(-180px) scaleX(.1) scaleY(.3);
+                    opacity: 0;
+                    background-color: var(--tag-bg-color);
+
+                    &:hover {
+                        cursor: pointer;
+                        background-color: oklch(from var(--tag-bg-color) calc(l - 25) c h);
+                    }
+                }
+
+                @keyframes fallDown {
+                    0% {
+                        transform: translateY(-180px) scaleX(.1) scaleY(.3);
+                        opacity: 1;
+                    }
+                    20% {
+                        transform: translateY(-200px) scaleX(.6) scaleY(.3);
+                    }
+                    75% {
+                        transform: translateY(0) scaleX(.6) scaleY(.3);
+                    }
+                    100% {
+                        transform: translateY(0)  scaleX(1) scaleY(1);
+                        opacity: 1;
+                    }
+                }
+            }
         }
     }
 }

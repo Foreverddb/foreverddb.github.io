@@ -5,6 +5,7 @@ tags:
 - springboot
 - 后端
 - 项目实践
+category: 笔记
 ---
 
 **由于服创项目的教考平台需要一个考试过程学生人脸认证的功能，因此使用springboot调用现成的API实现后端接口。**

@@ -6,6 +6,7 @@ tags:
 - 红米k30 5g
 - 面具root
 - twrp
+category: 搞机
 ---
 
 ## 解锁BootLoader

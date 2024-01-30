@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress';
 import { fileURLToPath, URL } from 'node:url';
+import sidebarData from './utils/sidebar.data';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -12,15 +13,7 @@ export default defineConfig({
       { text: 'Blogs', link: '/blogs/' }
     ],
 
-    sidebar: [
-      {
-        text: 'Examples',
-        items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
-          { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
-      }
-    ],
+    sidebar: sidebarData('/docs/blogs'),
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/Foreverddb' }
