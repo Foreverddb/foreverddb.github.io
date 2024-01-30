@@ -28,7 +28,7 @@ const TAG_COLORS = [
           {{ data.brief }}
       </article>
       <div class="tags">
-          <div v-if="data.category" class="category">
+          <div v-if="data.category" class="category tag">
               {{ data.category }}
           </div>
           <div v-for="(tag, index) in data.tags"
@@ -116,11 +116,16 @@ const TAG_COLORS = [
         gap: 5px;
         margin-top: 8px;
 
+        .category {
+            background: var(--vp-c-sponsor);
+            color: white;
+        }
+
         .tag {
             font-size: 14px;
             line-height: 18px;
             padding: 2px 8px;
-            border: 1px var(--vp-c-border) solid;
+            border: 1px transparent solid;
             border-radius: 5px;
         }
     }

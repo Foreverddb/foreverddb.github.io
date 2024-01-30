@@ -15,7 +15,7 @@ export default function (sidebarPath: string): SidebarData[] {
 
     const categoryMap = new Map<string, SidebarData[]>();
 
-    for (const file of files.filter((file) => file !== 'index.md')) {
+    for (const file of files) {
         const filePath = path.join(dir, file);
         if (!fs.statSync(filePath).isDirectory()) {
             const {data = {}} = matter.read(filePath);

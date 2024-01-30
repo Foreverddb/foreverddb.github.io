@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "ForeverDdB"
   text: "Frontend Developer"
-  tagline: 你怎么知道我拿到立石凛的亲笔to签了
+  tagline: 你怎么知道我拿到立石凛的首次亲笔to签了
   image:
     src: /public/index.png
     alt: Anon Tokyo
@@ -17,16 +17,16 @@ hero:
       text: About Me
       link: /api-examples
 
-features:
-  - icon: 1
-    title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-    link: /blogs/
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-    link: /blogs
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-    link: /blogs
+#features:
+#  - icon: 1
+#    title: Feature A
+#    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+#    link: /blogs/
+#  - title: Feature B
+#    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+#    link: /blogs
+#  - title: Feature C
+#    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+#    link: /blogs
 ---
 

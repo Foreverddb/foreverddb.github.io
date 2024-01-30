@@ -13,7 +13,7 @@ export default defineConfig({
       { text: 'Blogs', link: '/blogs/' }
     ],
 
-    sidebar: sidebarData('/docs/blogs'),
+    sidebar: sidebarData('/docs/blogs/posts'),
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/Foreverddb' }

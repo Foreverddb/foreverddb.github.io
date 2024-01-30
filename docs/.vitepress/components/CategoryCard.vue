@@ -16,13 +16,26 @@ defineProps({
     },
 });
 const emit = defineEmits(['click']);
+
+const CapitalNumerals = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+function stringToCapitalNumerals(str: string) {
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === '-') {
+            result += '-';
+            continue;
+        }
+        result += CapitalNumerals[parseInt(str[i])];
+    }
+    return result;
+}
 </script>
 
 <template>
     <div @click="emit('click')" class="category-container" :class="selected ? 'selected' : ''">
         <span class="frequency">{{ frequency }}</span>
         <p>{{ category }} &nbsp;</p>
-        <span>{{ pinyin.pinyinWithOutYin(category, '') }}</span>
+        <span>{{ parseInt(category.replace('-', '')) + '' === category.replace('-', '') ? stringToCapitalNumerals(category) : pinyin.pinyinWithOutYin(category, '') }}</span>
         <div>
         </div>
     </div>
@@ -50,10 +63,12 @@ const emit = defineEmits(['click']);
 
     p {
         display: inline;
+        white-space: nowrap;
     }
 
     span {
         font-weight: 200;
+        white-space: nowrap;
     }
 
     div {

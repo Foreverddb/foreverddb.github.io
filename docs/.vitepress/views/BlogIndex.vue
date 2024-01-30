@@ -125,6 +125,7 @@ onMounted(() => {
                             fill="currentColor"></path>
                     </svg>
                     按{{ isByTime ? '类型' : '时间' }}
+                    <div class="switch-bg">BY {{ isByTime ? 'CATEGORY' : 'TIME' }}</div>
                 </div>
             </div>
             <div class="categories-container">
@@ -150,7 +151,7 @@ onMounted(() => {
                 </template>
             </div>
             <div class="tags-container">
-                <div class="tags-header">标签</div>
+                <div class="tags-header">📑 标签</div>
                 <div class="tags">
                     <div
                         class="tag"
@@ -271,6 +272,7 @@ header {
         position: relative;
         display: flex;
         align-items: end;
+        white-space: nowrap;
 
         &:hover {
             &::before, &::after {
@@ -289,8 +291,10 @@ header {
             align-items: end;
             line-height: 1;
             margin-left: 3px;
-            border: 1px dashed var(--vp-c-gray-3);
+            //border: 1px dashed var(--vp-c-gray-3);
             border-radius: 4px;
+            white-space: nowrap;
+            position: relative;
 
             svg {
                 margin-right: 3px;
@@ -301,6 +305,21 @@ header {
                 border-color: var(--vp-c-green-3);
                 cursor: pointer;
                 color: var(--vp-c-green-3);
+            }
+
+            .switch-bg {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                white-space: nowrap;
+                color: gray;
+                border: none;
+                font-weight: 900;
+                font-size: 26px;
+                z-index: -1;
+                opacity: 0.3;
+                transform-origin: 0;
+                transform: scaleX(0.4);
             }
         }
 
@@ -353,6 +372,13 @@ header {
 
         .tags-container {
             margin: 10px 0;
+
+            .tags-header {
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--vp-c-text-1);
+                margin: 10px 0;
+            }
 
             .tags {
                 display: flex;
