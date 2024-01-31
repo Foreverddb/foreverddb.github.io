@@ -24,6 +24,9 @@ export default defineConfig({
     },
   },
   vite: {
+    ssr: {
+
+    },
     resolve: {
       alias: [
         {

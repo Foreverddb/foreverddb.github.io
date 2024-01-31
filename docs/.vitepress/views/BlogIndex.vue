@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {data} from '../utils/blogs.data';
-import {computed, onMounted, ref, watch} from "vue";
-import Splitting from 'splitting';
+import {computed, ref, watch} from "vue";
 import {useData} from "vitepress";
 import BlogCard from '../components/BlogCard.vue';
 import TimelineAnim from '../components/TimelineAnim.vue';
@@ -32,6 +31,7 @@ const categoryFilter = computed(() => {
         return (value: BlogDataItem) => value;
     }
 });
+
 function handleClickCategory(category: string) {
     if (categorySelected.value === category) {
         categorySelected.value = null;
@@ -44,6 +44,7 @@ const dateSelected = ref<string | null>(null);
 const dateFilter = computed(() => {
     return (value: BlogDataItem) => (value.date + '').startsWith(dateSelected.value || '');
 });
+
 function handleClickDate(date: string) {
     if (dateSelected.value === date) {
         dateSelected.value = null;
@@ -62,6 +63,7 @@ const tagsFilter = computed(() => {
         }
     };
 });
+
 function handleTagSelected(tag: string) {
     if (tagsSelected.value.includes(tag)) {
         tagsSelected.value = tagsSelected.value.filter((value) => value !== tag);
@@ -80,17 +82,18 @@ const blogs = computed(() => {
 const colors = Array.from(new Array(data.tags.length), () => {
     return `hsl(${Math.random() * 360}, 60%, 60%)`;
 });
-
-onMounted(() => {
-    Splitting();
-});
 </script>
 
 <template>
     <TextMixAnim/>
     <header>
         <TimelineAnim :timeline="data.timeLine"/>
-        <h1 class="header-title" data-splitting>{{ hero?.title || 'Blogs' }}</h1>
+        <h1 class="header-title" style="--word-total: 1; --char-total: 5;" data-splitting>
+            <span class="char" v-for="(s, i) in (hero?.title || 'blogs')" :style="{
+                '--char-total': (hero?.title || 'blogs').length,
+                '--char-index': i,
+            }">{{ s }}</span>
+        </h1>
         <span class="bg-title">{{ hero?.title || 'Blogs' }}</span>
         <span class="subtitle">{{ hero?.subtitle || 'DdB is working every night and day.' }}</span>
     </header>
@@ -163,7 +166,7 @@ onMounted(() => {
                         }"
                         @click="handleTagSelected(tag)"
                     >
-                        {{tag}}
+                        {{ tag }}
                     </div>
                 </div>
             </div>
@@ -212,7 +215,7 @@ header {
         text-align: center;
         line-height: 1.15;
 
-        :deep(.char) {
+        .char {
             background: linear-gradient(-45deg,
             var(--color) 45%,
             var(--color-2) 45%,
@@ -414,7 +417,7 @@ header {
                         transform: translateY(0) scaleX(.6) scaleY(.3);
                     }
                     100% {
-                        transform: translateY(0)  scaleX(1) scaleY(1);
+                        transform: translateY(0) scaleX(1) scaleY(1);
                         opacity: 1;
                     }
                 }
