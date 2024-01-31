@@ -7,7 +7,7 @@ hero:
   text: "Frontend Developer"
   tagline: 你怎么知道我拿到立石凛的首次亲笔to签了
   image:
-    src: /public/index.png
+    src: /index.png
     alt: Anon Tokyo
   actions:
     - theme: brand
@@ -15,7 +15,7 @@ hero:
       link: /blogs/
     - theme: alt
       text: About Me
-      link: /api-examples
+      link: /
 
 #features:
 #  - icon: 1

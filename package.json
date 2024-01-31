@@ -3,7 +3,8 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "build": "node scripts/build.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
