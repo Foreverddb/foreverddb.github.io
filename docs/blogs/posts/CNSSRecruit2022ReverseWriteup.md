@@ -6,7 +6,7 @@ tags:
 - CTF
 - CNSS
 category: 笔记
-brief: 简介
+brief: CNSS 2022招新的逆向题目，除了BOSS题都写了，最后挂了，不过还是挺有意思的，记录一波。
 ---
 
 # CNSS Recruit 2022 Reverse Writeup

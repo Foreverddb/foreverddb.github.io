@@ -1,11 +1,12 @@
 ---
-title: springboot调用api实现教考平台人脸识别接口
+title: springboot基于第三方api实现教考平台人脸识别接口
 date: 2022-03-04 18:28:57
 tags:
 - springboot
 - 后端
 - 项目实践
 category: 笔记
+brief: 大一寒假打比赛写的屎山，浅浅记录一下
 ---
 
 **由于服创项目的教考平台需要一个考试过程学生人脸认证的功能，因此使用springboot调用现成的API实现后端接口。**

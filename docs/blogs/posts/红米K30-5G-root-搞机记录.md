@@ -1,12 +1,13 @@
 ---
 title: 红米K30 5G root/搞机记录
-date: 2021-08-16 16:01:59
+date: 2021-07-16 16:01:59
 tags:
 - 搞机
 - 红米k30 5g
 - 面具root
 - twrp
 category: 搞机
+brief: 高考完暑假终于有时间搞搞手机了，红米k30 5g root记录。
 ---
 
 ## 解锁BootLoader
