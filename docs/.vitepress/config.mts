@@ -22,11 +22,10 @@ export default defineConfig({
     search: {
       provider: 'local',
     },
+    outline: 'deep',
+
   },
   vite: {
-    ssr: {
-
-    },
     resolve: {
       alias: [
         {
