@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import gsap from 'gsap';
 import {onMounted, onUnmounted, PropType, ref} from 'vue';
-import * as DrawSVGPlugin from '../utils/DrawSVGPlugin';
 import {TimeLine} from '../utils/data-formatter';
 import {SVG_TEXTS} from '../utils/svg-texts';
 
@@ -15,9 +14,6 @@ const props = defineProps({
         default: 300,
     },
 });
-
-// 注册svg动画插件
-gsap.registerPlugin(DrawSVGPlugin);
 
 function getFirstControlPoints(rhs) {
     const n = rhs.length,
@@ -231,20 +227,28 @@ onMounted(() => {
     gsap.timeline({
         repeat: 0,
         ease: 'power3.inOut',
-    }).fromTo('.spline', {drawSVG: '0%'}, {duration: 3 * len, drawSVG: '100%'});
+    }).fromTo('.spline', {
+        strokeDashoffset: '200%',
+    }, {
+        duration: 3 * len,
+        strokeDashoffset: 0,
+    });
 
     gsap.timeline({
         repeat: 0,
         ease: 'power3.inOut',
     }).fromTo(document.querySelectorAll('.dot'),
-        {drawSVG: '0%'},
         {
+            strokeDashoffset: 26,
+            strokeDasharray: 26,
+        },
+        {
+            strokeDashoffset: 0,
+            strokeDasharray: 26,
             duration: 2,
-            drawSVG: '100%',
             stagger: {
                 amount: 1.5,
                 grid: "auto",
-                from: "left",
             },
         },
     );
@@ -253,10 +257,14 @@ onMounted(() => {
         repeat: 0,
         ease: 'power3.inOut',
     }).fromTo(document.querySelectorAll('.text'),
-        {drawSVG: '0%'},
+        {
+            strokeDashoffset: '400%',
+            strokeDasharray: '400%',
+        },
         {
             duration: 1,
-            drawSVG: '100%',
+            strokeDashoffset: 0,
+            strokeDasharray: '400%',
             stagger: 0.5,
         },
     );
@@ -298,7 +306,7 @@ onUnmounted(() => {
     </div>
 </template>
 
-<style scoped>
+<style lang="less" scoped>
 .svg-container {
     width: 100%;
     position: absolute;
@@ -307,5 +315,14 @@ onUnmounted(() => {
     left: 0;
     opacity: 0.6;
     filter: url(#fractal);
+
+    .spline {
+        stroke-dasharray: 200%;
+    }
+
+    :deep(.dot, .text) {
+        stroke-dasharray: 0;
+        stroke-dashoffset: 0;
+    }
 }
 </style>

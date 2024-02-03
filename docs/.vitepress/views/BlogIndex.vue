@@ -8,8 +8,6 @@ import TextMixAnim from '../components/TextMixAnim.vue';
 import CategoryCard from '../components/CategoryCard.vue';
 import {BlogDataItem} from '../utils/data-formatter';
 
-console.log(data);
-
 const {frontmatter} = useData();
 
 const {hero} = frontmatter.value;
