@@ -10,7 +10,7 @@ interface SidebarData {
 
 export default function (sidebarPath: string): SidebarData[] {
     const dir = path.join(process.cwd(), sidebarPath);
-    const linkDir = "/blogs";
+    const linkDir = "/blogs/posts";
     const files = fs.readdirSync(dir);
 
     const categoryMap = new Map<string, SidebarData[]>();
