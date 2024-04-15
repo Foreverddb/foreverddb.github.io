@@ -9,7 +9,13 @@ tags:
 brief: Vue3响应式系统的源码解析，结合个人复现vue的浅薄经验，逐行解析核心设计思路以及实现细节，以期更好地理解vue的整体原理。
 ---
 
+> 在vue3中，响应式模块被提取为一个独立的api，与vue框架本身解耦，同时提供了很多新的响应式能力，为我们提供了一个全面、方便、可控的响应式能力集合。其中源码使用了众多es6新特性、新的设计思路。本文旨在深度分析vue3响应式源码的核心流程，不仅关注代码做了什么，还要关注为什么，以个人的理解来逐步分析vue3响应式api源码的主要实现，用通俗的解释和更方便的小tips来讲解源码，包含了核心的响应式函数`reactive`、`ref`、`watch`、`computed`的代码细节与其内部整体结构`trigger`、`track`、`effect`等重要模块，帮助读者更深入理解vue的响应式原理。
+
 # Vue源码解析-响应式系统篇
+
+本文基于`Vue3.4.15`编写。
+
+源码仓库：[https://github.com/vuejs/core](https://github.com/vuejs/core)
 
 在vue3中关于响应式的组合式api位于目录`packages/reactivity/src`中，其包含如下文件：
 
@@ -48,7 +54,7 @@ function effect() {
 
 > 正常情况下，我们在编写函数时常常会想要避免副作用，因为对于原生的js变量来说，我们难以追踪一个变量存在哪些副作用，而哪些函数的依赖又是哪些的。这种不明确性对于常规的编程来说很难接受（事实上，对于一些涉及全局状态的操作副作用是无法避免的。但是对于一般的函数式编程来说我们始终应该保证变量的修改和读取是统一实现、可以管理的）。vue实现的响应式系统使我们可以不用关注渲染层面的副作用，只需知道当响应式数据发生改变时会导致相关视图的重新渲染。
 
-## 依赖追踪与副作用收集
+## 依赖追踪与副作用收集、触发
 
 要实现响应式系统，首先需要具有收集副作用与管理依赖的能力，即当一个响应式数据发生变化时我们知道会触发哪些副作用函数，同时也需要知道一个副作用函数会在哪些数据变化时被触发。
 
@@ -74,7 +80,7 @@ function effect2() {
 2. `trigger`：当一个响应式变量的值被修改时，即触发其相关所有的副作用函数（所有使用到其值的副作用函数）
 3. `effect`：用于注册副作用函数，其表明只有被其注册的副作用函数会成为`副作用`而被依赖收集与重新触发，以与其他普通的使用到响应式变量的函数相区分。
 
-### track和trigger
+### track
 
 为了实现在有读取数据的地方能自动运行`track`方法，我们需要一种能力让响应式对象被读取或修改时通知我们。ES6标准下的`Proxy`对象就支持这种能力，它允许我们设置拦截器来代理对象的各种基本操作。
 
@@ -195,7 +201,7 @@ class BaseReactiveHandler implements ProxyHandler<Target> {
 
 其中，构造函数可以看出通过`reactive`创建的响应式常规对象，默认是非只读和深层响应式的。深层响应式意味着它深层遍历了对象的每一个引用类型的属性并为其设置代理，这里我们暂且不讨论深浅代理和是否只读的区别。
 
-#### get代理
+#### 在get代理中track
 
 在代理函数中首先进行了取值的判断，对一些`reactive`对象的特殊属性进行返回处理：
 
@@ -314,7 +320,7 @@ function createArrayInstrumentations() {
 
 对于`includes`, `indexOf`, `lastIndexOf`的情况，由于是涉及到所有数据的查找操作，因此需要对数组所有的值建立响应式联系。
 
-而对于`push`等方法，由于其调用过程会同时对`length`的读取和修改操作，导致副作用相互影响，产生无限循环触发副作用的问题。试想如下一个情景：
+而对于`push`等方法，由于其调用过程会同时隐式地对`length`的读取和修改操作，导致副作用相互影响，产生无限循环触发副作用的问题。试想如下一个情景：
 
 ```typescript
 const arr = reactive([]) 
@@ -405,7 +411,7 @@ export enum TrackOpTypes {
     return res
 ```
 
-##### track实现
+#### 具体实现
 
 现在来看`track`函数的具体实现：
 
@@ -489,7 +495,7 @@ export function trackEffect(
   effect: ReactiveEffect,
   dep: Dep,
   debuggerEventExtraInfo?: DebuggerEventExtraInfo,
-) {
+) {                                                                    
   if (dep.get(effect) !== effect._trackId) {
     dep.set(effect, effect._trackId)
     const oldDep = effect.deps[effect._depsLength]
@@ -516,16 +522,18 @@ export function trackEffect(
 dep.get(effect) !== effect._trackId
 ```
 
-// TODO trackId分析
+在这里，我们暂且认为`_trackId`是一个代表依赖相关性的属性，它分别被记录在副作用函数上和副作用函数对应的依赖上。在`track`阶段，发现副作用函数和依赖处记录的`_trackId`不同，则触发依赖记录和`_trackId`的更新。`_trackId`发挥作用是在后续的依赖清除环节，它被用来判断副作用函数与其依赖是否相关，这部分会在后面详细分析。
 
 ```typescript
+dep.set(effect, effect._trackId)
 const oldDep = effect.deps[effect._depsLength]
 ```
 
+首先，在依赖中添加副作用函数，key为副作用函数，value为`_trackId`。然后从副作用函数的`deps`中取得目标位置的依赖，需要注意`effect._depsLength`并没有减一，表明这是数组最后一个有效位置的下一位。
+
 `effect`函数的`deps`属性实质上是一个反向依赖，`depsMap`记录了一个`target`的每个`key`对应的副作用函数列表，而反之，每个副作用函数的`deps`就记录了所有它所处的副作用函数列表。
 
-> 为什么要做这样一个双向的追踪呢？试想副作用函数中存在一个分支结构：```isOk ? a.text : b.text```，第一次执行时`isOk`为true，`a`的`text`属性被收集为依赖，当其更改时会导致重新运行当前副作用函数。而当`isOk`为false时，我们期望`a.text`的更改将不会再触发副作用，所以我们需要一个依赖清除的能力。`effect.deps`会储存每一个用到了`effect`的副作用函数列表，以便在自己运行时清除所有自己想关的依赖。由于副作用函数运行时本身会重新建立依赖，所以不用担心清除后依赖失效的问题。
-
+> 为什么要做这样一个双向的追踪呢？试想副作用函数中存在一个分支结构：`isOk ? a.text : b.text`，第一次执行时`isOk`为true，`a`的`text`属性被收集为依赖，当其更改时会导致重新运行当前副作用函数。而当`isOk`为false时，我们期望`a.text`的更改将不会再触发副作用，所以我们需要一个依赖清除的能力。`effect.deps`会储存每一个用到了`effect`的副作用函数列表(即每一个用到了`effect`的具体`target.key`对应的副作用函数函数Map)，以便在自己运行时清除所有自己想关的依赖。由于副作用函数运行时本身会重新建立依赖，所以不用担心清除后依赖失效的问题。实际的依赖建立和清理的实现更为复杂，也会涉及到前文讲到的`_trackId`属性，具体放在`effect()`的具体实现部分进行解析。
 
 
 ```typescript
@@ -539,5 +547,1140 @@ else {
   effect._depsLength++
 }
 ```
+
+结合前面获取`oldDep`的方式，可以判断这里实际是一个类似数组的`push`操作，只不过先判断了是否已经存在与目标依赖相同的依赖，若不相同则正常处理依赖的清除和新增。
+
+至此，我们便成功完成了`track`的核心能力：为响应式对象和副作用函数建立双向依赖。
+
+#### 其他触发track的情况
+
+get是对一个对象属性最直观的访问操作，它是直接通过对象属性的索引来访问的。而此外，还存在一些隐式的、不直观的操作，它们同样读取了对象属性，需要进行依赖追踪和副作用收集。
+
+`has`是针对 in 操作符的代理方法，其用于判断某个属性是否存在于该对象或其原型链上。其拦截器函数如下：
+
+```typescript
+has(target: object, key: string | symbol): boolean {
+  const result = Reflect.has(target, key)
+  if (!isSymbol(key) || !builtInSymbols.has(key)) {
+    track(target, TrackOpTypes.HAS, key)
+  }
+  return result
+}
+```
+
+`ownKeys`可以拦截获取对象所属`key`的操作，包括`Object.getOwnPropertyNames()`、`Object.getOwnPropertySymbols()`、`Object.keys()`和`Reflect.ownKeys()`。其拦截器函数如下：
+
+```typescript
+ownKeys(target: object): (string | symbol)[] {
+  track(
+    target,
+    TrackOpTypes.ITERATE,
+    isArray(target) ? 'length' : ITERATE_KEY,
+  )
+  return Reflect.ownKeys(target)
+}
+```
+
+由于此处是用于遍历对象属性的，其与目标对象的关联是对象的属性列表，所以并不应该与某特定的属性建立依赖关系，而仅应该在属性发生增删/索引变化时触发。因此，对于数组，对`length`进行追踪，对于普通对象，则使用一个唯一的`Symbol`类型进行标记（这样可以避免影响到对象的正常属性）：
+
+```typescript
+export const ITERATE_KEY = Symbol(__DEV__ ? 'iterate' : '')
+```
+
+然后对于普通对象的属性变化，我们手动在对应的操作下触发`ITERATE_KEY`的副作用即可。
+
+#### collection类型对象的代理
+
+```typescript
+if (key === ReactiveFlags.IS_REACTIVE) {
+  return !isReadonly
+} else if (key === ReactiveFlags.IS_READONLY) {
+  return isReadonly
+} else if (key === ReactiveFlags.RAW) {
+  return target
+}
+
+return Reflect.get(
+  hasOwn(instrumentations, key) && key in target
+    ? instrumentations
+    : target,
+  key,
+  receiver,
+)
+```
+
+整体并不复杂，需要注意的是这一行：
+
+```typescript
+hasOwn(instrumentations, key) && key in target
+```
+
+这里首先判断了`instrumentations`中是否存在对应`key`，若存在，则将`target`改为`instrumentations`传入`Reflect.get`。
+
+我们再看`instrumentations`的实现，它覆盖实现了`collection`类型对象的方法，便于我们进行劫持：
+
+```typescript
+const mutableInstrumentations: Record<string, Function | number> = {
+  get(this: MapTypes, key: unknown) {
+    return get(this, key)
+  },
+  get size() {
+    return size(this as unknown as IterableCollections)
+  },
+  has,
+  add,
+  set,
+  delete: deleteEntry,
+  clear,
+  forEach: createForEach(false, false),
+}
+```
+
+接下来分别解析几个通用的`collection`函数的代理：
+
+以`Map`类型为例，当我们调用其`get()`方法来取值时，实际上在代理函数中的`key`为`get`，而我们再通过`Reflect.get()`来返回需要取得的`Map.get()`函数。为了取得劫持，我们实际上通过`instrumentations`来替换了`Map.get()`方法，所以`get`代理返回的`Map.get()`方法实际上是`instrumentations`中的`get`方法，并为其绑定了代理对象为函数的`this`。
+
+> 对象方法的调用流程，我们可以分为两个步骤，一是从对象读取改方法值（此时方法是作为属性被读取的），二是调用方法。可以假设其调用流程为：`Function.prototype.call(obj.func, obj)`，因此第一步会触发对象的`get`代理，第二步会触发该方法的`apply`代理。
+
+因此实际上`Map.get()`调用函数如下：
+
+```typescript
+function get(
+  target: MapTypes,
+  key: unknown,
+  isReadonly = false,
+  isShallow = false,
+) {
+  // #1772: readonly(reactive(Map)) should return readonly + reactive version
+  // of the value
+  target = (target as any)[ReactiveFlags.RAW]
+  const rawTarget = toRaw(target)
+  const rawKey = toRaw(key)
+  if (!isReadonly) {
+    if (hasChanged(key, rawKey)) {
+      track(rawTarget, TrackOpTypes.GET, key)
+    }
+    track(rawTarget, TrackOpTypes.GET, rawKey)
+  }
+  const { has } = getProto(rawTarget)
+  const wrap = isShallow ? toShallow : isReadonly ? toReadonly : toReactive
+  if (has.call(rawTarget, key)) {
+    return wrap(target.get(key))
+  } else if (has.call(rawTarget, rawKey)) {
+    return wrap(target.get(rawKey))
+  } else if (target !== rawTarget) {
+    // #3602 readonly(reactive(Map))
+    // ensure that the nested reactive `Map` can do tracking for itself
+    target.get(key)
+  }
+}
+```
+
+其流程并不复杂，主要是做不同情况下的工程处理，然后通过`track()`来建立依赖，通过`target.get(key)`来返回实际的`Map.get()`值。
+
+其他的相关函数都与此类似，故不做额外分析。
+
+
+### trigger
+
+我们回到响应式对象拦截器创建的部分。已经知道在对象属性的读取（get操作）时回触发依赖追踪和副作用收集，那么接下来就是在属性发生修改时能够触发相应的依赖。
+
+#### 在修改时trigger
+
+修改数据的方式有很多，`set`是最为常用的一种。其相比`get`只是多了一个返回的布尔值，表示是否修改成功：
+
+```typescript
+set(
+    target: object,
+    key: string | symbol,
+    value: unknown,
+    receiver: object,
+  ): boolean {
+    ...
+}
+```
+
+在拦截器的具体实现中，首先依然是对于不同情况的判断。
+
+若响应式对象并非浅响应式，且原属性值是`Ref`类型的的对象，则深层进行`Ref`对象方式的赋值（通过`.value`属性）与转化，而在浅响应模式中则对其原样赋值。
+
+```typescript
+let oldValue = (target as any)[key]
+if (!this._shallow) {
+  const isOldValueReadonly = isReadonly(oldValue)
+  if (!isShallow(value) && !isReadonly(value)) {
+    oldValue = toRaw(oldValue)
+    value = toRaw(value)
+  }
+  if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+    if (isOldValueReadonly) {
+      return false
+    } else {
+      oldValue.value = value
+      return true
+    }
+  }
+} else {
+  // in shallow mode, objects are set as-is regardless of reactive or not
+}
+```
+
+接下来是判断目标`key`是否存在于`target`上，以区分无此属性时新增的情况和修改原有属性的情况：
+
+```typescript
+const hadKey =
+  isArray(target) && isIntegerKey(key)
+    ? Number(key) < target.length
+    : hasOwn(target, key)
+```
+
+因为在修改属性时常常涉及到多种情况，导致属性更名/删除/新增等情况，需要在`trigger`时进行分别的处理，因此vue定义了如下几种`trigger`类型：
+
+```typescript
+export enum TriggerOpTypes {
+  SET = 'set',
+  ADD = 'add',
+  DELETE = 'delete',
+  CLEAR = 'clear',
+}
+```
+
+最后就是根据情况来调用`trigger`，需要注意若`target`对象为响应式对象的原型链上的对象（因为原型链上的对象若有proxy handler也会被触发）则不应`trigger`，因此需要对比`target`和`toRaw`得到的原始对象：
+
+```typescript
+const result = Reflect.set(target, key, value, receiver)
+  // don't trigger if target is something up in the prototype chain of original
+if (target === toRaw(receiver)) {
+  if (!hadKey) {
+    trigger(target, TriggerOpTypes.ADD, key, value)
+  } else if (hasChanged(value, oldValue)) {
+    trigger(target, TriggerOpTypes.SET, key, value, oldValue)
+  }
+}
+return result
+```
+
+对于普通的对象来说（非vue定义的collection类型的对象），除了`set`还有`deleteProperty`的数据修改方式需要处理，但它相对更为简单：
+
+```typescript
+deleteProperty(target: object, key: string | symbol): boolean {
+  const hadKey = hasOwn(target, key)
+  const oldValue = (target as any)[key]
+  const result = Reflect.deleteProperty(target, key)
+  if (result && hadKey) {
+    trigger(target, TriggerOpTypes.DELETE, key, undefined, oldValue)
+  }
+  return result
+}
+```
+
+只需注意将新值设置为`undefined`和传入对应的操作类型即可。
+
+#### trigger实现
+
+首先查看`trigger`函数的签名：
+
+```typescript
+export function trigger(
+  target: object,
+  type: TriggerOpTypes,
+  key?: unknown,
+  newValue?: unknown,
+  oldValue?: unknown,
+  oldTarget?: Map<unknown, unknown> | Set<unknown>,
+) {...}
+```
+
+注意到除了`target`和`type`参数外都是可选项，这是因为修改属性时，可能存在属性名、属性值等情况，需要我们根据`type`来判断具体的情况。
+
+接下来逐步看函数的具体实现代码。
+
+先取对应对象的依赖桶，若不存在说明未被追踪，直接返回即可：
+
+```typescript
+const depsMap = targetMap.get(target)
+if (!depsMap) {
+  // never been tracked
+  return
+}
+```
+
+首先定义了一个依赖数组，其中内容将会是后续真正执行的副作用函数，然后进入判断来将相关依赖加入到数组中。第一个`if`处理`type`为`clear`的情况，此时代表是`collection`类型的对象(如`Set`)内容清空，涉及到所有的属性，需要触发所有的相关副作用，因此直接复制整个对象的副作用依赖桶。而对于`else if`块，判断元素为数组，若修改了`length`属性，则会导致数组大小发生变化，我们只需对`length`变小的情况进行处理，因为此时会导致已有元素被删除，所以遍历所有的属性，找出此时被删除的属性和`length`自身加入到目的执行的依赖数组。
+
+```typescript
+let deps: (Dep | undefined)[] = []
+if (type === TriggerOpTypes.CLEAR) {
+  // collection being cleared
+  // trigger all effects for target
+  deps = [...depsMap.values()]
+} else if (key === 'length' && isArray(target)) {
+  const newLength = Number(newValue)
+  depsMap.forEach((dep, key) => {
+    if (key === 'length' || (!isSymbol(key) && key >= newLength)) {
+      deps.push(dep)
+    }
+  })
+} else {
+  ...
+}
+```
+
+最后一个`else`块源码如下：
+
+```typescript
+// schedule runs for SET | ADD | DELETE
+
+if (key !== void 0) {
+  // 将目标属性的依赖加入执行列表
+  deps.push(depsMap.get(key))
+}
+
+// also run for iteration key on ADD | DELETE | Map.SET
+switch (type) {
+  case TriggerOpTypes.ADD:
+    // type为新增属性的情况
+    if (!isArray(target)) {
+      // 若不为数组，则触发ITERATE_KEY对应副作用
+      deps.push(depsMap.get(ITERATE_KEY))
+      if (isMap(target)) {
+        // map有专门的MAP_KEY_ITERATE_KEY迭代标识
+        deps.push(depsMap.get(MAP_KEY_ITERATE_KEY))
+      }
+    } else if (isIntegerKey(key)) {
+      // isIntegerKey用于判断key是否符合数组的索引规范
+      // 若符合则需要触发length的副作用
+      // new index added to array -> length changes
+      deps.push(depsMap.get('length'))
+    }
+    break
+  case TriggerOpTypes.DELETE:
+    // type为删除的情况，都应触发对应的迭代副作用
+    // 数组的删除通过length进行处理，因此这里的情况不需要处理
+    if (!isArray(target)) {
+      deps.push(depsMap.get(ITERATE_KEY))
+      if (isMap(target)) {
+        deps.push(depsMap.get(MAP_KEY_ITERATE_KEY))
+      }
+    }
+    break
+  case TriggerOpTypes.SET:
+    // 普通修改仅对map进行特殊处理
+    if (isMap(target)) {
+      deps.push(depsMap.get(ITERATE_KEY))
+    }
+    break
+}
+```
+
+具体的细节已经写在注释当中，此处主要处理不同情况下对属性的修改导致影响`ownKeys`的迭代，需要触发对应对象的迭代副作用。
+
+最后即是具体调用`triggerEffects`函数，进行具体的副作用函数调用部分：
+
+```typescript
+pauseScheduling()
+for (const dep of deps) {
+  if (dep) {
+    triggerEffects(
+      dep,
+      DirtyLevels.Dirty,
+      __DEV__
+        ? {
+            target,
+            type,
+            key,
+            newValue,
+            oldValue,
+            oldTarget,
+          }
+        : void 0,
+    )
+  }
+}
+resetScheduling()
+```
+
+此处便是遍历`deps`数组，依次调用`triggerEffects`来进入实际的副作用执行阶段。
+
+> 可以注意到，`pauseScheduling()`和`resetScheduling()`在此前的`track`中也出现过，事实上，它们俩始终应该成对出现，用于控制调度器的运行与暂停。调度器是`effect`提供的一个能力，它让我们能够传入一个函数，来手动控制具体副作用函数的执行方式，当存在调度器时，将不会直接调用目的副作用函数，而是改为调用对应的调度器，具体的副作用执行方式由调度器自行决定。而`pauseScheduling()`会暂停调度器的执行，直到`resetScheduling()`执行时才可能会恢复执行。关于调度器的实际执行细节同样在`effect`详解。
+
+`triggerEffects`的函数签名如下：
+
+```typescript
+export function triggerEffects(
+  dep: Dep,
+  dirtyLevel: DirtyLevels,
+  debuggerEventExtraInfo?: DebuggerEventExtraInfo,
+) {...}
+```
+
+参数里有一个陌生的参数`dirtyLevel`，它代表着脏值检测的一个标志，用于判断数据是否发生变化与是否需要触发副作用等。具体将在`effect`进行解析。
+
+```typescript
+pauseScheduling()
+for (const effect of dep.keys()) {
+  if (
+    effect._dirtyLevel < dirtyLevel &&
+    dep.get(effect) === effect._trackId
+  ) {...}
+}
+scheduleEffects(dep)
+resetScheduling()
+```
+
+if块内的部分如下：
+
+```typescript
+const lastDirtyLevel = effect._dirtyLevel
+effect._dirtyLevel = dirtyLevel
+if (lastDirtyLevel === DirtyLevels.NotDirty) {
+  effect._shouldSchedule = true
+  if (__DEV__) {
+    effect.onTrigger?.(extend({ effect }, debuggerEventExtraInfo))
+  }
+  effect.trigger()
+}
+```
+
+此处会调用副作用的`trigger()`方法，若处于开发环境，还会调用对应的`onTrigger`钩子。事实上，通过`effect()`函数创建的副作用函数，其`trigger()`方法并不存在，其真正的触发方式是通过`scheduleEffects(dep)`方法将依赖全部加入调度器栈，并在最后通过`resetScheduling()`来依次触发调度器栈中的函数。
+
+在`effect()`函数中，创建副作用函数的部分如下：
+
+```typescript
+const _effect = new ReactiveEffect(fn, NOOP, () => {
+  if (_effect.dirty) {
+    _effect.run()
+  }
+})
+```
+
+第一个参数是我们传入的副作用函数，第二个参数则是`trigger()`方法，第三个参数是调度器函数。我们可以看到，其传入的`trigger()`为空，而使用了一个调度器来触发副作用函数的`run()`方法。在后续我们会了解到，真正调用副作用的其实是这个`run()`方法。所以实际上`triggerEffects()`并不会直接触发副作用，而是将它们加入调度器栈中，并在递归的最后再来依次触发。
+
+#### collection类型对象的代理
+
+此部分与[trigger: collection类型对象的代理](#collection类型对象的代理)部分非常相似，或者说只是覆写的对象方法不同。我们以最常用的修改方法`Map.set()`为例，我们覆写了此方法：
+
+```typescript
+function set(this: MapTypes, key: unknown, value: unknown) {
+  value = toRaw(value)
+  const target = toRaw(this)
+  const { has, get } = getProto(target)
+
+  let hadKey = has.call(target, key)
+  if (!hadKey) {
+    key = toRaw(key)
+    hadKey = has.call(target, key)
+  } else if (__DEV__) {
+    checkIdentityKeys(target, has, key)
+  }
+
+  const oldValue = get.call(target, key)
+  target.set(key, value)
+  if (!hadKey) {
+    trigger(target, TriggerOpTypes.ADD, key, value)
+  } else if (hasChanged(value, oldValue)) {
+    trigger(target, TriggerOpTypes.SET, key, value, oldValue)
+  }
+  return this
+}
+```
+
+流程非常简单，需要注意的是通过是否已经含有对应`key`值来执行不同的`trigger`类型：
+
+```typescript
+if (!hadKey) {
+  trigger(target, TriggerOpTypes.ADD, key, value)
+} else if (hasChanged(value, oldValue)) {
+  trigger(target, TriggerOpTypes.SET, key, value, oldValue)
+}
+```
+
+
+### effect
+
+在前文里，我们一直在说`effect`，它用来创建/注册一个副作用函数，使其函数内部的响应式变量能够与副作用函数建立联系。实际上，vue并不提供（对外暴露）一个名为`effect()`的函数，它更多的是在vue工程内作相应式的测试使用（我们可以发现在源码中它的用法都是在以`.spec.ts`为结尾的文件）。真正使用的到的是一个名为`ReactiveEffect`的类，它是一个充分实现了响应式副作用函数能力的类型，`effect()`函数本身也不过是对于`new ReactiveEffect()`的一个封装。因此在下文中，我们将主要分析`ReactiveEffect`类型。
+
+#### ReactiveEffect
+
+首先看构造函数：
+
+```typescript
+constructor(
+  public fn: () => T,
+  public trigger: () => void,
+  public scheduler?: EffectScheduler,
+  scope?: EffectScope,
+) {
+  recordEffectScope(this, scope)
+}
+```
+
+第一个参数是目标副作用函数，第二个参数是副作用函数的`trigger`（其正是上文中提到的`effect.trigger()`），第三个参数是副作用函数的调度器`scheduler`（它决定了如何调用副作用函数）。第四个参数是副作用函数的作用域，每个副作用函数都依附于一个作用域，以提供一个对副作用的控制能力，不传此参数会提供一个默认的当前作用域。
+
+> vue组件拥有setup的能力，我们可以在其中声明任意的响应式变量和副作用，而它们都会自动地与组件的生命周期相绑定，自动地创建与删除。手动收集这些依赖是很麻烦的，而通过`EffectScope`给每个组件一个副作用作用域的方法，可以很方便地进行统一的副作用管理，vue也为此专门抽离了一个`effectScope()`的API出来。
+
+在构造函数中调用了`recordEffectScope`函数，它的实现很简单：
+
+```typescript
+export function recordEffectScope(
+  effect: ReactiveEffect,
+  scope: EffectScope | undefined = activeEffectScope,
+) {
+  if (scope && scope.active) {
+    scope.effects.push(effect)
+  }
+}
+```
+
+每个`scope`都会储存属于自己的`effects`数组，只需判断若当前`scope`处于活跃状态即将其加入到其副作用函数列表中。
+
+现在我们暂且把`effect()`的实现简单地当作是返回了一个通过`new ReactiveEffect()`创建的副作用函数，其实现为：
+
+```typescript
+export function effect<T = any>(
+  fn: () => T,
+  options?: ReactiveEffectOptions,
+): ReactiveEffectRunner {
+  // ...一些对fn的处理...
+
+  const _effect = new ReactiveEffect(fn, NOOP, () => {
+    if (_effect.dirty) {
+      _effect.run()
+    }
+  })
+  // ...一些对option的处理...
+
+  const runner = _effect.run.bind(_effect) as ReactiveEffectRunner
+  runner.effect = _effect
+  return runner
+}
+```
+
+根据`ReactiveEffect`的构造函数参数可以知道，此处需要注意的点是第三个调度器参数，它表示了仅当`dirty`属性为`true`时才会执行副作用函数。`effect.run()`就是副作用函数对象的执行方法，我们先来看一下内部的实现：
+
+```typescript
+run() {
+  this._dirtyLevel = DirtyLevels.NotDirty
+  if (!this.active) {
+    return this.fn()
+  }
+  let lastShouldTrack = shouldTrack
+  let lastEffect = activeEffect
+  try {
+    shouldTrack = true
+    activeEffect = this
+    this._runnings++
+    preCleanupEffect(this)
+    return this.fn()
+  } finally {
+    postCleanupEffect(this)
+    this._runnings--
+    activeEffect = lastEffect
+    shouldTrack = lastShouldTrack
+  }
+}
+```
+
+主要执行逻辑在于`try...finally..`部分，在执行前先修改`shouldTrack`，表示此时运行进行依赖追踪，同时将`activeEffect`赋值为当前副作用函数对象，这与前面的`track()`相对应：
+
+```typescript
+// track中此条件成立才会进入依赖追踪
+if (shouldTrack && activeEffect) {
+  ...
+}
+```
+
+同时，它使用了一个`_runnings`属性来避免循环依赖，在副作用函数执行前进行自增，在执行完成后进行自减。因此，当`_runnings`的值不为0时，说明当前正在循环执行同一个副作用函数，在实际调用`effect.run()`的地方（事实上是在`resetScheduling()`中）会通过`_runnings`进行判断，不为0时将不会执行以避免出现循环依赖的问题。
+
+#### 依赖清除与_trackId的作用
+
+我们在之前谈到，因为条件改变等原因导致副作用函数的依赖项发生变化，而为了避免依赖性变化后副作用函数残留无关依赖，我们在执行副作用函数前回清除其所有的依赖并在执行时重新建立新的相关依赖。
+
+这并不准确，在vue中，实际上存在两个依赖清除的步骤，我们假设目标副作用函数为`fn`：
+
+1. 在`fn`执行前，调用`preCleanupEffect()`进行预清除
+2. 在`fn`执行后，调用`postCleanupEffect()`进行实际的依赖清除
+
+由于实际的清除是在副作用函数执行之后，为了找出需要清除的那部分依赖，引入了`_trackId`来作为依赖的相关性标识。
+
+我们先来看`preCleanupEffect()`函数：
+
+```typescript
+function preCleanupEffect(effect: ReactiveEffect) {
+  effect._trackId++
+  effect._depsLength = 0
+}
+```
+
+此处`_trackId`进行自增且仅能自增，保证每次执行都有一个新的唯一的id，与不同的执行时期进行区分（例如第一次执行时与第二次执行时副作用函数引用的某全局量发生改变导致实际执行情况不同）。
+
+接下来是实际清除依赖的函数`postCleanupEffect()`：
+
+```typescript
+function postCleanupEffect(effect: ReactiveEffect) {
+  if (effect.deps && effect.deps.length > effect._depsLength) {
+    for (let i = effect._depsLength; i < effect.deps.length; i++) {
+      cleanupDepEffect(effect.deps[i], effect)
+    }
+    effect.deps.length = effect._depsLength
+  }
+}
+```
+
+此处当副作用函数的实际依赖长度`effect.deps.length`超过记录的应有依赖长度`effect._depsLength`时，表明有不相关依赖残留，因此需要遍历依赖数组进行清除操作。
+
+清理依赖的具体实现在`cleanupDepEffect()`中：
+
+```typescript
+function cleanupDepEffect(dep: Dep, effect: ReactiveEffect) {
+  const trackId = dep.get(effect)
+  if (trackId !== undefined && effect._trackId !== trackId) {
+    dep.delete(effect)
+    if (dep.size === 0) {
+      dep.cleanup()
+    }
+  }
+}
+```
+
+这里进行了一个判断，只有当副作用函数的`_trackId`与其在依赖中记录的不同时才删除此依赖，为什么要如此呢？
+
+根据`track`和`effect`中核心函数的实现，思考如下流程：
+
+1. 副作用函数执行前，`_trackId`自增1
+2. 副作用函数执行时，触发`trackEffect`函数，若此时`_trackId`与依赖`dep`中原先记录的不同，则更新依赖中记录的id并建立依赖关系
+3. 副作用函数执行后，遍历依赖，若发现其`_trackId`仍与记录的不同，则说明在函数执行过程中没有重新建立依赖，表明此时副作用函数与此依赖不相关，即可清除
+
+由此，即可实现清除与副作用函数不相关依赖的能力。
+
+同样，在`trigger`的执行中，也会判断`_trackId`与记录的是否相同，以此来避免执行不相关的副作用函数。
+
+#### scheduler的统一调度
+
+在前面`trigger`和`track`部分中我们都有遇到`pauseScheduling()`、`resetScheduling()`和`resetScheduling()`函数，它们专门用于控制和避免调度器运行过程中产生的意外情况，实际上也保证了调度执行的原子性。试想如下的一个情况：
+
+```typescript
+const a = ref<number[]>([]);
+
+effect(() => {
+  console.log('a', `value: ${JSON.stringify(a.value)}`);
+  a.value.splice(0);
+});
+
+a.value.push(1);
+```
+
+在`vue3.4.0`以前的版本，我们会发现其输出为：
+
+```typescript
+a value: []
+a value: [1]
+a value: [null]
+```
+
+这是令人迷惑的一个情况，因为我们期待的输出是只有前两行，第3行出现`[null]`是意料之外的。
+
+出现这种问题，实际上是因为调度器的执行过程中触发了另外的副作用。接下来进行逐步的分析：
+
+1. log数组，建立对数组的副作用依赖。执行`splice`，数组依然为[]。
+2. 执行`push`，其会产生两个操作:
+    a. 设置对应的索引`key(0)`对应值为1 
+    b. 更新`length`为1
+
+我们可以发现，在`push`方法设置索引时就会触发代理对象的`set`拦截器，进而触发副作用函数执行，导致`splice`执行。`splice`执行会使数组长度变回0且清除第一个元素内容，在其执行完成后回到`push`的第二步，由于`length`再次被从0改为1，因此再次触发副作用函数，此时打印出的数组即为`[null]`。
+
+要想避免这种情况，我们需要保证`push`操作的原子化，避免其在执行中途被其他调度器插队执行，其实现也比较简单，我们先看看几个主要方法的实现：
+
+```typescript
+export let pauseScheduleStack = 0
+
+export function pauseScheduling() {
+  pauseScheduleStack++
+}
+
+export function resetScheduling() {
+  pauseScheduleStack--
+  while (!pauseScheduleStack && queueEffectSchedulers.length) {
+    queueEffectSchedulers.shift()!()
+  }
+}
+```
+
+通过设置一个`pauseScheduleStack`来记录scheduler的时机，在每个需要保证原子化的部分首先调用`pauseScheduling()`，在执行完成后调用`resetScheduling()`，其可以保证在目标部分执行完成前绝对不会执行调度器（即pauseScheduleStack为0）。而在执行完成后，`resetScheduling()`仅在`pauseScheduleStack`值为0时才依次执行调度器。我们可以列出一个类似结构：
+
+```typescript
+pauseScheduling()
+  // ...一些操作
+  pauseScheduling()
+    // ...一些操作
+    pauseScheduling()
+      // ...一些操作
+      scheduleEffects(dep)
+    resetScheduling()
+    // ...一些操作
+  resetScheduling()
+  // ...一些操作
+resetScheduling()
+```
+
+我们可以进行不断的嵌套，并在最终执行时保证将目标调度器通过`scheduleEffects(dep)`推入执行栈，这样可以让其在递归退出到最外层执行栈时可以依次触发目标调度器。`scheduleEffects()`实现如下：
+
+```typescript
+export function scheduleEffects(dep: Dep) {
+  for (const effect of dep.keys()) {
+    if (
+      effect.scheduler &&
+      effect._shouldSchedule &&
+      (!effect._runnings || effect.allowRecurse) &&
+      dep.get(effect) === effect._trackId
+    ) {
+      effect._shouldSchedule = false
+      queueEffectSchedulers.push(effect.scheduler)
+    }
+  }
+}
+```
+
+其中，`effect._shouldSchedule`是在前文的`triggerEffects()`里被标注为`true`的。
+
+现在我们返回最初的例子，当数组的`push()`被调用时，会进入到我们劫持的`push`方法：
+
+```typescript
+(['push', 'pop', 'shift', 'unshift', 'splice'] as const).forEach(key => {
+  instrumentations[key] = function (this: unknown[], ...args: unknown[]) {
+    pauseTracking()
+    pauseScheduling() // 暂停调度
+    const res = (toRaw(this) as any)[key].apply(this, args)
+    resetScheduling() // 恢复调度
+    resetTracking()
+    return res
+  }
+})
+```
+
+在调用数组真正的`push()`方法前，`pauseScheduling`值变为1，然后调用方法，使其触发`key`和`length`的副作用，但在这些副作用执行过程中无论何时`pauseScheduling`都不会小于1，直到`push`完整执行后，才调用在其过程中推入调度器栈的副作用函数。而在两步执行过程中分别触发副作用，然而在第二步时由于没有了`splice()`对`length`的干扰，导致`length`值并没有发生变化，因此实际最终只会触发一次调度器，最终得到期望结果。
+
+> `push()`方法虽然设置索引值与设置length是依次进行，但实际上原生数组对象在索引设置完成后`length`就会自动更新，所以第二步更新`length`时其已经变为实际长度了，这导致其并不会触发第二次length变化的副作用。
+
+> `push()`是一个通用的方法，它不仅可以用于原生数组，还可以用于具备`length`属性的类数组对象，由于类数组对象在索引更新后并不会自动更新`length`，因此此时便是其第二步设置length发挥作用的地方。
+
+#### dirty
+
+在`ReactiveEffect`类中定义有一个`_dirtyLevel`属性：
+
+```typescript
+_dirtyLevel = DirtyLevels.Dirty
+```
+
+其初始值为`DirtyLevels.Dirty`，而`DirtyLevels`的枚举如下：
+
+```typescript
+export enum DirtyLevels {
+  NotDirty = 0,
+  MaybeDirty = 1,
+  Dirty = 2,
+}
+```
+
+我们首先知道，在`ReactiveEffect`的`run()`方法中，第一行便是：
+
+```typescript
+this._dirtyLevel = DirtyLevels.NotDirty;
+```
+
+在前文的`triggerEffects()`中有一个相关部分：
+
+```typescript
+if (
+  effect._dirtyLevel < dirtyLevel &&
+  dep.get(effect) === effect._trackId
+) {
+  const lastDirtyLevel = effect._dirtyLevel
+  effect._dirtyLevel = dirtyLevel
+  if (lastDirtyLevel === DirtyLevels.NotDirty) {
+    effect._shouldSchedule = true
+    // ...调用effect.trigger()
+    // ...
+  }
+  // ...
+}
+```
+
+此处的`dirtyLevel`变量在一般情况下的值都为`DirtyLevels.Dirty`，意味着仅当`effect._dirtyLevel`不为`Dirty`时才会进入下文，并且其会被赋值为`Dirty`。接下来，若此前的`_dirtyLevel`为`NoDirty`，则会将`_shouldSchedule`赋值为true，后续在遍历调度器时仅当`_shouldSchedule`为true时才会执行。
+
+对比`effect.run()`和`triggerEffects()`中的流程，我们可以大致有一个基本判断：
+
+当副作用被触发，但副作用函数还未实际运行时，`_dirtyLevel`变为脏的，当副作用函数实际执行后则`_dirtyLevel`就不脏了。并且，仅当原来不脏的时候才会执行调度器（副作用函数的实际执行者）。
+
+这种设计在一般的响应式情况下并没有什么额外的作用，它的出现主要是用于帮助Vue3.4版本以后的计算属性避免不必要的副作用重新触发。我们将在下文计算属性部分进行详解。
+
+#### 副作用的作用域：EffectScope
+
+
+
+
+## 响应式API的实现
+
+在前面我们已经基本分析了`trigger`、`track`和`effect`的原理，实际上vue的响应式API基本上就是这3个基础的组合使用，接下来我们将分析几个常用响应式API的实现细节。
+
+### reactive
+
+`reactive`是vue3最为基础的响应式API，它能够传入一个对象并返回对象的响应式代理。
+
+其代码如下：
+
+```typescript
+export function reactive<T extends object>(target: T): UnwrapNestedRefs<T>
+export function reactive(target: object) {
+  // if trying to observe a readonly proxy, return the readonly version.
+  if (isReadonly(target)) {
+    return target
+  }
+  return createReactiveObject(
+    target,
+    false,
+    mutableHandlers,
+    mutableCollectionHandlers,
+    reactiveMap,
+  )
+}
+```
+
+其通过`createReactiveObject()`函数创建代理对象：
+
+```typescript
+function createReactiveObject(
+  target: Target,
+  isReadonly: boolean,
+  baseHandlers: ProxyHandler<any>,
+  collectionHandlers: ProxyHandler<any>,
+  proxyMap: WeakMap<Target, any>,
+) {
+  ...
+}
+```
+
+传入的参数`proxyMap`（在`reactive()`调用时传入的`reactiveMap`）是`reactive.ts`文件维护的一个全局依赖桶，声明如下：
+
+```typescript
+export const reactiveMap = new WeakMap<Target, any>()
+```
+
+`createReactiveObject()`方法的代码很简单，如下：
+
+```typescript
+if (!isObject(target)) {
+    if (__DEV__) {
+      console.warn(`value cannot be made reactive: ${String(target)}`)
+    }
+    return target
+  }
+  // target is already a Proxy, return it.
+  // exception: calling readonly() on a reactive object
+  if (
+    target[ReactiveFlags.RAW] &&
+    !(isReadonly && target[ReactiveFlags.IS_REACTIVE])
+  ) {
+    return target
+  }
+  //上面处理target不为对象、target为响应式对象的case
+
+  // target already has corresponding Proxy
+  const existingProxy = proxyMap.get(target)
+  if (existingProxy) {
+    return existingProxy
+  }
+  // only specific value types can be observed.
+  const targetType = getTargetType(target)
+  if (targetType === TargetType.INVALID) {
+    return target
+  }
+  const proxy = new Proxy(
+    target,
+    targetType === TargetType.COLLECTION ? collectionHandlers : baseHandlers,
+  )
+  proxyMap.set(target, proxy)
+  return proxy
+```
+
+首先是处理target不为对象、target为响应式对象的情况，然后判断是否已存在，若不存在则创建新代理，否则直接返回已有代理。
+
+`reacitve()`实际上在前文的`track()`部分已经做了分析，这里只看看总体流程。
+
+### ref
+
+`Proxy`实际上只支持对对象的代理，而对于js里同样常用的非对象类型数据则无能为例，这也导致了`reactive()`无法代理原始值类型，因此，vue创造了`ref()`来解决这个问题。
+
+> 原始值指的是 `Boolean、Number、 BigInt、String、Symbol、undefined` 和 `null` 等类型的值。在JavaScript中，原始值是按值传递的，而非按引用传递。这意味着，如果一个函数接收原始值作为参数，那么形参与实参之间没有引用关系，它们是两个完全独立的值，对形参的修改不会影响实参。另外，JavaScript 中的Proxy无法提供对原始值的代理，因此想要将原始值变成响应式数据，就必须对其做一层包裹，也就是我们接下来要介绍的ref。 --《Vue设计与实现》
+
+`ref`的声明如下：
+
+```typescript
+export function ref<T>(value: T): Ref<UnwrapRef<T>>
+export function ref<T = any>(): Ref<T | undefined>
+export function ref(value?: unknown) {
+  return createRef(value, false)
+}
+```
+
+通过`createRef()`来创建代理对象：
+
+```typescript
+function createRef(rawValue: unknown, shallow: boolean) {
+  if (isRef(rawValue)) {
+    return rawValue
+  }
+  return new RefImpl(rawValue, shallow)
+}
+```
+
+先判断是否已经为`Ref`类型，若是则直接返回，否则创建一个`RefImpl`对象。
+
+```typescript
+class RefImpl<T> {
+  private _value: T
+  private _rawValue: T
+
+  public dep?: Dep = undefined
+  public readonly __v_isRef = true
+
+  constructor(
+    value: T,
+    public readonly __v_isShallow: boolean,
+  ) {
+    this._rawValue = __v_isShallow ? value : toRaw(value)
+    this._value = __v_isShallow ? value : toReactive(value)
+  }
+  // ...
+}
+```
+
+在`RefImpl`类的构造函数里，对`__v_isShallow`、`_rawValue`和`_value`属性进行了初始化，其分别代表是否浅代理、原始值、代理值。
+
+注意到，`_value`属性通过`toReactive()`进行赋值，其实现如下：
+
+```typescript
+export const toReactive = <T extends unknown>(value: T): T =>
+  isObject(value) ? reactive(value) : value
+```
+
+若不为对象则直接返回其值，否则返回一个`reactive()`代理。
+
+我们知道通过`ref()`创建的代理对象通过`.value`属性来进行访问和修改值，实际上，`RefImpl`类便是构造了`value`属性的访问器来劫持其读取与修改过程，实现对原始值的响应能力。而此处得到的`_value`属性便是`value`的基础，当访问`value`时，会对其建立响应式依赖，并返回`_value`的值。
+
+```typescript
+class RefImpl<T> {
+  // ...
+  get value() {
+    trackRefValue(this)
+    return this._value
+  }
+  // ...
+}
+```
+
+建立响应式依赖的部分和`reactive()`的`get`代理部分十分相似：
+
+```typescript
+export function trackRefValue(ref: RefBase<any>) {
+  if (shouldTrack && activeEffect) {
+    ref = toRaw(ref)
+    trackEffect(
+      activeEffect,
+      ref.dep ||
+        (ref.dep = createDep(
+          () => (ref.dep = undefined),
+          ref instanceof ComputedRefImpl ? ref : undefined,
+        )),
+      __DEV__
+        ? {
+            target: ref,
+            type: TrackOpTypes.GET,
+            key: 'value',
+          }
+        : void 0,
+    )
+  }
+}
+```
+
+需要注意的是，`ref`的副作用依赖并没有一个全局的依赖桶，它是通过`ref.dep`属性来储存的，而其类型为对象的值的下层依赖由`reactive()`维护。实际上，我们可以认为`Ref`类型只自己维护了一个`.value`属性的依赖列表。此外，调用`trackEffect()`时若无依赖列表，则通过`createDep`创建，其第二个参数会为创建的`dep`增加一个`computed`属性，代表其依赖对应的计算属性。
+
+接下来看`value`属性的`set`：
+
+```typescript
+set value(newVal) {
+  const useDirectValue =
+    this.__v_isShallow || isShallow(newVal) || isReadonly(newVal)
+  newVal = useDirectValue ? newVal : toRaw(newVal)
+  if (hasChanged(newVal, this._rawValue)) {
+    this._rawValue = newVal
+    this._value = useDirectValue ? newVal : toReactive(newVal)
+    triggerRefValue(this, DirtyLevels.Dirty, newVal)
+  }
+}
+```
+
+新值若相对旧值发生变化，则重新调用`toReactive()`为其赋值，然后通过`triggerRefValue()`来触发副作用。而`triggerRefValue()`实际也是`triggerEffects()`的封装：
+
+```typescript
+export function triggerRefValue(
+  ref: RefBase<any>,
+  dirtyLevel: DirtyLevels = DirtyLevels.Dirty,
+  newVal?: any,
+) {
+  ref = toRaw(ref)
+  const dep = ref.dep
+  if (dep) {
+    triggerEffects(
+      dep,
+      dirtyLevel,
+      __DEV__
+        ? {
+            target: ref,
+            type: TriggerOpTypes.SET,
+            key: 'value',
+            newValue: newVal,
+          }
+        : void 0,
+    )
+  }
+}
+```
+
+### computed
+
+计算属性相对`ref`和`reactive`比较特殊，它允许传入一个副作用函数，并在其副作用的依赖发生变化时重新执行副作用，并将副作用计算的结果值返回作为其计算属性值使用。同时，它的值与其他响应式对象一样可以触发其他副作用，还可以缓存上一次计算值，避免不必要的副作用（在vue3.4中更新）。
+
+我们从`computed()`入口函数开始：
+
+```typescript
+export function computed<T>(
+  getterOrOptions: ComputedGetter<T> | WritableComputedOptions<T>,
+  debugOptions?: DebuggerOptions,
+  isSSR = false,
+) {
+  let getter: ComputedGetter<T>
+  let setter: ComputedSetter<T>
+
+  const onlyGetter = isFunction(getterOrOptions)
+  if (onlyGetter) {
+    getter = getterOrOptions
+    setter = __DEV__
+      ? () => {
+          console.warn('Write operation failed: computed value is readonly')
+        }
+      : NOOP
+  } else {
+    getter = getterOrOptions.get
+    setter = getterOrOptions.set
+  }
+
+  const cRef = new ComputedRefImpl(getter, setter, onlyGetter || !setter, isSSR)
+
+  if (__DEV__ && debugOptions && !isSSR) {
+    cRef.effect.onTrack = debugOptions.onTrack
+    cRef.effect.onTrigger = debugOptions.onTrigger
+  }
+
+  return cRef as any
+}
+```
+
+先判断传入的参数是否为函数，若是则将`getter`赋值为传入函数，否则获取其传入的`setter`和`getter`。然后将两者传入`ComputedRefImpl`的构造函数，并将其作为计算属性对象返回。
+
+此处可以看出计算属性的核心实现应与`ref`类似，通过一个对象来代理`value`属性的读写操作来实现响应式。先来看`ComputedRefImpl`的构造函数：
+
+```typescript
+export class ComputedRefImpl<T> {
+  public dep?: Dep = undefined
+  private _value!: T
+  public readonly effect: ReactiveEffect<T>
+
+  public readonly __v_isRef = true
+  public readonly [ReactiveFlags.IS_READONLY]: boolean = false
+  public _cacheable: boolean
+
+  constructor(
+    getter: ComputedGetter<T>,
+    private readonly _setter: ComputedSetter<T>,
+    isReadonly: boolean,
+    isSSR: boolean,
+  ) {
+    this.effect = new ReactiveEffect(
+      () => getter(this._value),
+      () => triggerRefValue(this, DirtyLevels.MaybeDirty),
+      () => this.dep && scheduleEffects(this.dep),
+    )
+    this.effect.computed = this
+    this.effect.active = this._cacheable = !isSSR
+    this[ReactiveFlags.IS_READONLY] = isReadonly
+  }
+  //... 
+}
+```
+
+其核心在于创建了一个`ReactiveEffect`副作用函数并将其赋值给`this.effect`。我们知道，`ReactiveEffect`构造函数的3个参数分别为副作用函数、`trigger`函数，调度器函数。可以注意到，在此前的用法中一直没有传入`trigger`参数，此处却传入了（事实上，`trigger`参数的主要作用便是用于计算属性的处理，它先于调度器执行），并且在其中调用了`ref`中的`triggerRefValue()`，其`dirtyLevel`传入了`DirtyLevels.MaybeDirty`。
+
+计算属性可以当作为副作用一个中介，我们传入的`getter`是一个计算副作用，是中间态，而我们实际读取计算属性（读取了计算属性的`.value`）的副作用应该才是响应式依赖改变需要触发的副作用。vue3.4的计算属性遵循如下流程：
+
+1. 计算属性的依赖发生改变
+
+2. 若存在依赖计算属性的副作用，运行计算副作用，检验值是否发生变化。否则什么也不做
+
+3. 发生变化，则触发真正的副作用函数，否则什么也不做
+
+extra. 当读取计算属性值时，若其依赖值没有发生改变，则不重新计算，使用上一次的缓存值，否则重新计算并返回新值
+
+可以看出，计算属性会有两次副作用执行的判断，而计算副作用和最终副作用的触发都取决于是否存在最终副作用，也就是是否有对计算属性`.value`的`get`操作。因此我们可以通过`value`属性的访问器函数来进行操作：
+
+```typescript
+export class ComputedRefImpl<T> {
+  get value() {
+    // the computed ref may get wrapped by other proxies e.g. readonly() #3376
+    const self = toRaw(this)
+    if (!self._cacheable || self.effect.dirty) {
+      if (hasChanged(self._value, (self._value = self.effect.run()!))) {
+        triggerRefValue(self, DirtyLevels.Dirty)
+      }
+    }
+    trackRefValue(self)
+    if (self.effect._dirtyLevel >= DirtyLevels.MaybeDirty) {
+      triggerRefValue(self, DirtyLevels.MaybeDirty)
+    }
+    return self._value
+  }
+}
+```
+
+注意到，这里使用到了`effect.dirty`和`effect._dirtyLevel`属性。在前文的`effect`部分已经给出了关于`_dirtyLevel`的介绍，这里则给出`dirty`属性的访问器：
+
+```typescript
+public get dirty() {
+  if (this._dirtyLevel === DirtyLevels.MaybeDirty) {
+    pauseTracking()
+    for (let i = 0; i < this._depsLength; i++) {
+      const dep = this.deps[i]
+      if (dep.computed) {
+        triggerComputed(dep.computed)
+        if (this._dirtyLevel >= DirtyLevels.Dirty) {
+          break
+        }
+      }
+    }
+    if (this._dirtyLevel < DirtyLevels.Dirty) {
+      this._dirtyLevel = DirtyLevels.NotDirty
+    }
+    resetTracking()
+  }
+  return this._dirtyLevel >= DirtyLevels.Dirty
+}
+```
+
+分析整体流程，首先是判断副作用函数的`_dirtyLevel`，当其为`MaybeDirty`才会进入执行，
+
+
+
+我们尝试还原整个`computed`流程：
+
 
 
