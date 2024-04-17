@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "ForeverDdB"
   text: "Frontend Developer"
-  tagline: 你怎么知道我拿到立石凛的首次亲笔to签了
+  tagline: you go my go here we go
   image:
     src: /index.png
     alt: Anon Tokyo
@@ -17,16 +17,15 @@ hero:
       text: About Me
       link: /
 
-#features:
-#  - icon: 1
-#    title: Feature A
-#    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-#    link: /blogs/
-#  - title: Feature B
-#    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-#    link: /blogs
-#  - title: Feature C
-#    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-#    link: /blogs
+features:
+- title: DdBind
+  details: A simple vue3-like MVVM Framework for learning
+  link: https://github.com/Foreverddb/DdBind
+- title: UESTC-auto-connect
+  details: Auto log in UESTC
+  link: https://github.com/Foreverddb/uestc-auto-connect
+- title: UmaLibAndroid
+  details:  A native Android App for Umamusume fictions reading
+  link: https://github.com/umalib/UmaLibAndroid
 ---
 
