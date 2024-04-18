@@ -682,7 +682,7 @@ function get(
 
 
 ### trigger
-
+  
 我们回到响应式对象拦截器创建的部分。已经知道在对象属性的读取（get操作）时回触发依赖追踪和副作用收集，那么接下来就是在属性发生修改时能够触发相应的依赖。
 
 #### 在修改时trigger
@@ -911,7 +911,7 @@ export function triggerEffects(
   dirtyLevel: DirtyLevels,
   debuggerEventExtraInfo?: DebuggerEventExtraInfo,
 ) {...}
-```
+``` 
 
 参数里有一个陌生的参数`dirtyLevel`，它代表着脏值检测的一个标志，用于判断数据是否发生变化与是否需要触发副作用等。具体将在`effect`进行解析。
 
@@ -1183,8 +1183,8 @@ a value: [null]
 
 1. log数组，建立对数组的副作用依赖。执行`splice`，数组依然为[]。
 2. 执行`push`，其会产生两个操作:
-    a. 设置对应的索引`key(0)`对应值为1 
-    b. 更新`length`为1
+  a. 设置对应的索引`key(0)`对应值为1 
+  b. 更新`length`为1
 
 我们可以发现，在`push`方法设置索引时就会触发代理对象的`set`拦截器，进而触发副作用函数执行，导致`splice`执行。`splice`执行会使数组长度变回0且清除第一个元素内容，在其执行完成后回到`push`的第二步，由于`length`再次被从0改为1，因此再次触发副作用函数，此时打印出的数组即为`[null]`。
 
@@ -1263,6 +1263,8 @@ export function scheduleEffects(dep: Dep) {
 
 > `push()`是一个通用的方法，它不仅可以用于原生数组，还可以用于具备`length`属性的类数组对象，由于类数组对象在索引更新后并不会自动更新`length`，因此此时便是其第二步设置length发挥作用的地方。
 
+需要注意的是，`scheduler`是一个供用户自定义的调度器，我们可以选择在其中真正执行对应的副作用函数，当然也可以选择不执行。有时我们仅仅想要通过`scheduler`来执行一些副作用函数以外的操作，只是需要通过`effect()`来实现对其依赖的监听，这其实也是`vue`中`watch`的原理。
+
 #### dirty
 
 在`ReactiveEffect`类中定义有一个`_dirtyLevel`属性：
@@ -1312,11 +1314,6 @@ if (
 当副作用被触发，但副作用函数还未实际运行时，`_dirtyLevel`变为脏的，当副作用函数实际执行后则`_dirtyLevel`就不脏了。并且，仅当原来不脏的时候才会执行调度器（副作用函数的实际执行者）。
 
 这种设计在一般的响应式情况下并没有什么额外的作用，它的出现主要是用于帮助Vue3.4版本以后的计算属性避免不必要的副作用重新触发。我们将在下文计算属性部分进行详解。
-
-#### 副作用的作用域：EffectScope
-
-
-
 
 ## 响应式API的实现
 
@@ -1619,15 +1616,15 @@ export class ComputedRefImpl<T> {
 }
 ```
 
-其核心在于创建了一个`ReactiveEffect`副作用函数并将其赋值给`this.effect`。我们知道，`ReactiveEffect`构造函数的3个参数分别为副作用函数、`trigger`函数，调度器函数。可以注意到，在此前的用法中一直没有传入`trigger`参数，此处却传入了（事实上，`trigger`参数的主要作用便是用于计算属性的处理，它先于调度器执行），并且在其中调用了`ref`中的`triggerRefValue()`，其`dirtyLevel`传入了`DirtyLevels.MaybeDirty`。
+其核心在于创建了一个`ReactiveEffect`副作用函数并将其赋值给`this.effect`。我们知道，`ReactiveEffect`构造函数的3个参数分别为副作用函数、`trigger`函数，调度器函数。可以注意到，在此前的用法中一直没有传入`trigger`参数，此处却传入了（事实上，`ReactiveEffect`的`trigger`参数的主要作用便是用于计算属性的处理，它先于调度器执行），并且在其中调用了`ref`中的`triggerRefValue()`，其`dirtyLevel`传入了`DirtyLevels.MaybeDirty`。
 
-计算属性可以当作为副作用一个中介，我们传入的`getter`是一个计算副作用，是中间态，而我们实际读取计算属性（读取了计算属性的`.value`）的副作用应该才是响应式依赖改变需要触发的副作用。vue3.4的计算属性遵循如下流程：
+计算属性可以当作为副作用一个中介，我们传入的`getter`是一个计算副作用，是中间态，而我们实际读取计算属性（读取了计算属性的`.value`）的副作用应该才是响应式依赖改变需要触发的副作用。我们猜测计算属性应遵循如下流程：
 
 1. 计算属性的依赖发生改变
 
-2. 若存在依赖计算属性的副作用，运行计算副作用，检验值是否发生变化。否则什么也不做
+2. 若存在依赖计算属性的副作用，**运行计算副作用（getter），检验值是否发生变化**。否则什么也不做
 
-3. 发生变化，则触发真正的副作用函数，否则什么也不做
+3. 发生变化，则触发真正的副作用函数（即读取了计算属性的那个副作用函数），否则什么也不做
 
 extra. 当读取计算属性值时，若其依赖值没有发生改变，则不重新计算，使用上一次的缓存值，否则重新计算并返回新值
 
@@ -1652,7 +1649,15 @@ export class ComputedRefImpl<T> {
 }
 ```
 
-注意到，这里使用到了`effect.dirty`和`effect._dirtyLevel`属性。在前文的`effect`部分已经给出了关于`_dirtyLevel`的介绍，这里则给出`dirty`属性的访问器：
+注意到，这里使用到了`effect.dirty`和`effect._dirtyLevel`属性。`computed`是如何得知其依赖的响应式属性是否有发生变化就是通过此处的`dirty`实现，我们可以设计一个简单的流程（注意，这里只是一个推测的基础流程）：
+
+1. 初始`dirty`为`true`，第一次读取时直接执行getter
+
+2. getter执行后`dirty`设置为`false`
+
+3. 当计算属性的依赖发生变化时（即getter副作用被触发时），通过`ReactiveEffect`的调度器参数，首先将`dirty`设置为`true`，并且此时并不直接执行`getter`，而是尝试通过`trigger`来触发读取计算属性的那个副作用函数，并且在计算属性的`get`代理中重新计算结果。
+
+在前文的`effect`部分已经给出了关于`_dirtyLevel`的介绍，这里则给出`dirty`属性的访问器：
 
 ```typescript
 public get dirty() {
@@ -1676,11 +1681,123 @@ public get dirty() {
 }
 ```
 
-分析整体流程，首先是判断副作用函数的`_dirtyLevel`，当其为`MaybeDirty`才会进入执行，
+分析整体流程，首先是判断副作用函数的`_dirtyLevel`，当其为`MaybeDirty`才会进入执行（代表计算属性依赖的响应式数据发生了变化），否则直接返回其`_dirtyLevel`是否大于等于`Dirty`。
 
+在if块中，会遍历取得每一个依赖项。可以注意到，`this`指向的副作用函数是计算属性的`getter`，那么该副作用函数的依赖理便是`getter`的依赖，暨计算属性依赖的每一个响应式数据。对于每一个遍历到的依赖，我们尝试获取到其中的计算属性（如果该依赖是一个计算属性），并触发其计算：
 
+```typescript
+function triggerComputed(computed: ComputedRefImpl<any>) {
+  return computed.value
+}
+```
 
-我们尝试还原整个`computed`流程：
+在此前`pauseTracking()`的主要原因便是避免此处的`get`操作导致外层读取计算属性的副作用绑定到了内层嵌套的计算属性上。
 
+此外，为依赖绑定计算属性是在`trackRefValue中做的`:
 
+```typescript
+export const createDep = (
+  cleanup: () => void,
+  computed?: ComputedRefImpl<any>,
+): Dep => {
+  const dep = new Map() as Dep
+  dep.cleanup = cleanup
+  dep.computed = computed
+  return dep
+}
 
+export function trackRefValue(ref: RefBase<any>) {
+  if (shouldTrack && activeEffect) {
+    ref = toRaw(ref)
+    trackEffect(
+      activeEffect,
+      ref.dep ||
+        (ref.dep = createDep(
+          () => (ref.dep = undefined),
+          ref instanceof ComputedRefImpl ? ref : undefined,
+        )),
+      __DEV__
+        ? {
+            target: ref,
+            type: TrackOpTypes.GET,
+            key: 'value',
+          }
+        : void 0,
+    )
+  }
+}
+```
+
+我们回到计算属性的`get value()`代理，在判断了`dirty`后若为脏，则会执行`getter`来得到新的计算值，并判断与原值是否相等，不相等则会触发依赖此计算属性的副作用：
+
+```typescript
+if (!self._cacheable || self.effect.dirty) {
+  if (hasChanged(self._value, (self._value = self.effect.run()!))) {
+    triggerRefValue(self, DirtyLevels.Dirty)
+  }
+}
+```
+
+然后会使用`trackRefValue`将当前计算属性的`value`属性与读取该`value`的副作用函数建立依赖，然后若`getter`的`_dirtyLevel`大于等于`MaybeDirty`则触发建立的依赖副作用函数。
+
+```typescript
+trackRefValue(self)
+if (self.effect._dirtyLevel >= DirtyLevels.MaybeDirty) {
+  triggerRefValue(self, DirtyLevels.MaybeDirty)
+}
+return self._value
+```
+
+> 之所以需要区分`Dirty`和`MaybeDirty`是因为计算属性可能存在的两种修改状态，一是在计算属性依赖的响应式数据发生改变时，我们理应认为数据脏了。但是，依赖数据的更改并不一定代表最终计算结果会更改，我们可以认为只有最终的数据发生更改了才是真正的脏值，而依赖改变则作为一个中间态`MaybeDirty`来提醒此时数据只是可能为脏。
+
+这里进行了很多的`_dirtyLevel`判断，看起来很难理解，因此我们回到`effect`的创建处，从这里入手：
+
+```typescript
+this.effect = new ReactiveEffect(
+  () => getter(this._value),
+  () => triggerRefValue(this, DirtyLevels.MaybeDirty),
+  () => this.dep && scheduleEffects(this.dep),
+)
+```
+
+其重点在于第二个参数`trigger`和第三个参数`scheduler`。在前文的[dirty](#dirty)部分有讲到当运行`triggerEffects`时会判断副作用的`_dirtyLevel`，如下：
+
+```typescript
+if (
+  effect._dirtyLevel < dirtyLevel &&
+  dep.get(effect) === effect._trackId
+) {
+  const lastDirtyLevel = effect._dirtyLevel
+  effect._dirtyLevel = dirtyLevel
+  if (lastDirtyLevel === DirtyLevels.NotDirty) {
+    effect._shouldSchedule = true
+    if (__DEV__) {
+      effect.onTrigger?.(extend({ effect }, debuggerEventExtraInfo))
+    }
+    effect.trigger()
+  }
+}
+```
+
+在计算属性中，当`getter`被触发时（非第一次），其`_dirtyLevel`为`NoDirty`，在其依赖改变导致触发进入到`triggerEffects`后被修改为`dirty`，在运行其`run`方法后又回到`NoDirty`，可以正常完成运行，没有依赖计算属性的`effect`并不会受到脏值检查的影响。
+
+而`getter`的触发会进入到其`effect.trigger()`，而`getter`传入的`trigger`为`triggerRefValue(this, DirtyLevels.MaybeDirty)`，它会导致依赖此计算属性的副作用函数的调用。当其副作用进入到`triggerEffects`时，其`_dirtyLevel`为`NoDirty`，而`triggerEffects`的参数`dirtyLevel`为`MaybeDirty`，这意味着当`triggerEffects`执行完成后`effect._dirtyLevel`会变为`MaybeDirty`而不是`Dirty`。
+
+对于一般的副作用函数，其创建时传入的调度器如下：
+
+```typescript
+if (effect.dirty) {
+  effect.run()
+}
+```
+
+这导致`effect.dirty`的调用，而在其中会导致触发`triggerComputed`而读取计算属性值，导致进入到计算属性的`get value()`代理，在`get value`中会判断`getter`副作用的脏值水平，由于其是在调用调度器之前执行的，故`getter`的脏值水平依然处于`Dirty`，因而可以重新执行`getter`副作用进行计算并与上次缓存值进行对比，若发生改变则会执行`triggerRefValue(this, DirtyLevels.Dirty)`，使得`effect.dirty`为`true`，而由于其原本的`_dirtyLevel`不为`NoDirty`，因此不会执行`trigger`和调度器，只会在`effect.dirty`返回后执行一次`effect.run()`，暨依赖该计算属性的副作用函数。若未发生改变，则会在`get value()`的最后调用`triggerRefValue(this, DirtyLevels.MaybeDirty)`，在执行时由于其副作用的脏值水平为`MaybeDirty`，故并不会触发`trigger`，而最终`effect.dirty`返回得到的值也为`false`，因此不会触发依赖该计算属性的副作用。
+
+我们尝试还原整个`computed`流程（假设调用计算属性值的副作用为`user`，计算属性的计算方法为`getter`）：
+
+1. `getter`的依赖发生改变，触发`getter`，进入`getter`的`trigger`，此时`getter._dirtyLevel`由`NoDirty`变为`Dirty`
+2. `getter.trigger()`触发`user`，导致`user._dirtyLevel`变为`MaybeDirty`
+3. 进入调度器队列，`getter`自身并不会执行，而是通过它的调度器将`user`送入调度器，`user`判断`.dirty`时触发计算属性的`get value()`，导致重新计算（此处执行`getter`并获得计算结果）
+  a. 重新计算结果与原来相同，则什么也不做
+  b. 重新计算结果与原来不同，改变`user._dirtyLevel`为`Dirty`
+4. `user.dirty`返回值，若计算结果改变，则返回应为`true`，执行`user`调度器。否则返回`false`，不执行调度器。
