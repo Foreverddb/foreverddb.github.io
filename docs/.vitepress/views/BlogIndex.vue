@@ -4,7 +4,7 @@ import {computed, ref, watch} from "vue";
 import {useData} from "vitepress";
 import BlogCard from '../components/BlogCard.vue';
 import TimelineAnim from '../components/TimelineAnim.vue';
-import TextMixAnim from '../components/TextMixAnim.vue';
+// import TextMixAnim from '../components/TextMixAnim.vue';
 import CategoryCard from '../components/CategoryCard.vue';
 import {BlogDataItem} from '../utils/data-formatter';
 
@@ -83,7 +83,7 @@ const colors = Array.from(new Array(data.tags.length), () => {
 </script>
 
 <template>
-    <TextMixAnim/>
+<!--    <TextMixAnim/>-->
     <header>
         <TimelineAnim :timeline="data.timeLine"/>
         <h1 class="header-title" style="--word-total: 1; --char-total: 5;" data-splitting>

@@ -12,7 +12,6 @@ const isHome = computed(() => {
   return frontmatter.value.layout === 'home';
 });
 
-console.log(isHome);
 </script>
 
 <template>

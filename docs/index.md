@@ -15,17 +15,20 @@ hero:
       link: /blogs/
     - theme: alt
       text: About Me
-      link: /
+#      link: /about
 
 features:
-- title: DdBind
+- icon: 🖥️
+  title: DdBind
   details: A simple vue3-like MVVM Framework for learning
   link: https://github.com/Foreverddb/DdBind
-- title: UESTC-auto-connect
-  details: Auto log in UESTC
+- icon: 🏫
+  title: UESTC-auto-connect
+  details: Auto login UESTC's website with sliding verification
   link: https://github.com/Foreverddb/uestc-auto-connect
-- title: UmaLibAndroid
-  details:  A native Android App for Umamusume fictions reading
+- icon: 📖
+  title: UmaLibAndroid
+  details:  A native Android(Kotlin) App for Umamusume fictions reading, now migration to React-Native
   link: https://github.com/umalib/UmaLibAndroid
 ---
 

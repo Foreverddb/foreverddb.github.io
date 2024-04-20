@@ -6,13 +6,14 @@ import sidebarData from './utils/sidebar.data';
 export default defineConfig({
   title: "DdB's Blog",
   description: "ForeverDdB's personal blog site",
+  head: [["link", { rel: "icon", href: "/index.png" }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Blogs', link: '/blogs/' }
+      // { text: 'About', link: '/about' },
+      { text: 'Blogs', link: '/blogs/' },
     ],
-
     sidebar: sidebarData('/docs/blogs/posts'),
 
     socialLinks: [
