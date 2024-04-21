@@ -107,64 +107,66 @@ const colors = Array.from(new Array(data.tags.length), () => {
             />
         </main>
         <aside>
-            <div class="part-header">
-                🏷 文章归档
-                <div @click="isByTime = !isByTime">
-                    <svg viewBox="0 0 1028 1024"
-                         xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                        <path
-                            d="M470.791621 216.202867 470.791621 149.027563c-172.171996 0-316.683572 120.238148-353.375965 281.120176L19.192944 430.14774l128.141125 163.140022 128.705623-163.140022L186.284454 430.14774C221.84785 306.522602 335.876516 216.202867 470.791621 216.202867z"
-                            fill="currentColor"></path>
-                        <path
-                            d="M1027.951488 593.287762l-128.705623-163.140022-128.141125 163.140022 87.497244 0c-35.563396 123.625138-149.592062 214.509372-285.071665 214.509372L573.53032 874.972437c172.171996 0 316.683572-120.238148 353.940463-281.684675L1027.951488 593.287762z"
-                            fill="currentColor"></path>
-                        <path
-                            d="M477.001103 628.286659 204.9129 628.286659c-8.467475 0-15.241455 6.77398-15.241455 15.241455l0 272.088203c0 8.467475 6.77398 15.241455 15.241455 15.241455l272.088203 0c8.467475 0 15.241455-6.77398 15.241455-15.241455L492.242558 643.528115C492.242558 635.060639 485.468578 628.286659 477.001103 628.286659zM429.583241 859.730981c0 5.080485-3.951488 9.031974-9.031974 9.031974L260.798236 868.762955c-5.080485 0-9.031974-3.951488-9.031974-9.031974L251.766262 699.977949c0-5.080485 3.951488-9.031974 9.031974-9.031974l159.753032 0c5.080485 0 9.031974 3.951488 9.031974 9.031974L429.583241 859.730981 429.583241 859.730981z"
-                            fill="currentColor"></path>
-                        <path
-                            d="M845.054024 90.319735l-272.088203 0c-8.467475 0-15.241455 6.77398-15.241455 15.241455L557.724366 378.213892c0 8.467475 6.77398 15.241455 15.241455 15.241455l272.088203 0c8.467475 0 15.241455-6.77398 15.241455-15.241455L860.29548 106.125689C860.29548 97.658214 853.521499 90.319735 845.054024 90.319735zM797.636163 321.764057c0 5.080485-3.951488 9.031974-9.031974 9.031974l-159.753032 0c-5.080485 0-9.031974-3.951488-9.031974-9.031974L619.819184 162.011025c0-5.080485 3.951488-9.031974 9.031974-9.031974l159.753032 0c5.080485 0 9.031974 3.951488 9.031974 9.031974L797.636163 321.764057z"
-                            fill="currentColor"></path>
-                    </svg>
-                    按{{ isByTime ? '类型' : '时间' }}
-                    <div class="switch-bg">BY {{ isByTime ? 'CATEGORY' : 'TIME' }}</div>
+            <div class="aside-container">
+                <div class="part-header">
+                    🏷 文章归档
+                    <div @click="isByTime = !isByTime">
+                        <svg viewBox="0 0 1028 1024"
+                             xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                            <path
+                                d="M470.791621 216.202867 470.791621 149.027563c-172.171996 0-316.683572 120.238148-353.375965 281.120176L19.192944 430.14774l128.141125 163.140022 128.705623-163.140022L186.284454 430.14774C221.84785 306.522602 335.876516 216.202867 470.791621 216.202867z"
+                                fill="currentColor"></path>
+                            <path
+                                d="M1027.951488 593.287762l-128.705623-163.140022-128.141125 163.140022 87.497244 0c-35.563396 123.625138-149.592062 214.509372-285.071665 214.509372L573.53032 874.972437c172.171996 0 316.683572-120.238148 353.940463-281.684675L1027.951488 593.287762z"
+                                fill="currentColor"></path>
+                            <path
+                                d="M477.001103 628.286659 204.9129 628.286659c-8.467475 0-15.241455 6.77398-15.241455 15.241455l0 272.088203c0 8.467475 6.77398 15.241455 15.241455 15.241455l272.088203 0c8.467475 0 15.241455-6.77398 15.241455-15.241455L492.242558 643.528115C492.242558 635.060639 485.468578 628.286659 477.001103 628.286659zM429.583241 859.730981c0 5.080485-3.951488 9.031974-9.031974 9.031974L260.798236 868.762955c-5.080485 0-9.031974-3.951488-9.031974-9.031974L251.766262 699.977949c0-5.080485 3.951488-9.031974 9.031974-9.031974l159.753032 0c5.080485 0 9.031974 3.951488 9.031974 9.031974L429.583241 859.730981 429.583241 859.730981z"
+                                fill="currentColor"></path>
+                            <path
+                                d="M845.054024 90.319735l-272.088203 0c-8.467475 0-15.241455 6.77398-15.241455 15.241455L557.724366 378.213892c0 8.467475 6.77398 15.241455 15.241455 15.241455l272.088203 0c8.467475 0 15.241455-6.77398 15.241455-15.241455L860.29548 106.125689C860.29548 97.658214 853.521499 90.319735 845.054024 90.319735zM797.636163 321.764057c0 5.080485-3.951488 9.031974-9.031974 9.031974l-159.753032 0c-5.080485 0-9.031974-3.951488-9.031974-9.031974L619.819184 162.011025c0-5.080485 3.951488-9.031974 9.031974-9.031974l159.753032 0c5.080485 0 9.031974 3.951488 9.031974 9.031974L797.636163 321.764057z"
+                                fill="currentColor"></path>
+                        </svg>
+                        按{{ isByTime ? '类型' : '时间' }}
+                        <div class="switch-bg">BY {{ isByTime ? 'CATEGORY' : 'TIME' }}</div>
+                    </div>
                 </div>
-            </div>
-            <div class="categories-container">
-                <template v-if="!isByTime">
-                    <CategoryCard
-                        v-for="category in data.categories"
-                        :key="category.name"
-                        :category="category.name || '未分类'"
-                        :frequency="category.frequency"
-                        @click="handleClickCategory(category.name)"
-                        :selected="categorySelected === category.name"
-                    />
-                </template>
-                <template v-else>
-                    <CategoryCard
-                        v-for="time in [...data.timeLine].reverse()"
-                        :key="time.time"
-                        :category="time.time"
-                        :frequency="time.frequency"
-                        @click="handleClickDate(time.time)"
-                        :selected="dateSelected === time.time"
-                    />
-                </template>
-            </div>
-            <div class="tags-container">
-                <div class="tags-header">📑 标签</div>
-                <div class="tags">
-                    <div
-                        class="tag"
-                        v-for="(tag, index) in data.tags"
-                        :class="(tagsSelected.length && !tagsSelected.includes(tag)) ? 'unselected' : ''"
-                        :style="{
+                <div class="categories-container">
+                    <template v-if="!isByTime">
+                        <CategoryCard
+                            v-for="category in data.categories"
+                            :key="category.name"
+                            :category="category.name || '未分类'"
+                            :frequency="category.frequency"
+                            @click="handleClickCategory(category.name)"
+                            :selected="categorySelected === category.name"
+                        />
+                    </template>
+                    <template v-else>
+                        <CategoryCard
+                            v-for="time in [...data.timeLine].reverse()"
+                            :key="time.time"
+                            :category="time.time"
+                            :frequency="time.frequency"
+                            @click="handleClickDate(time.time)"
+                            :selected="dateSelected === time.time"
+                        />
+                    </template>
+                </div>
+                <div class="tags-container">
+                    <div class="tags-header">📑 标签</div>
+                    <div class="tags">
+                        <div
+                            class="tag"
+                            v-for="(tag, index) in data.tags"
+                            :class="(tagsSelected.length && !tagsSelected.includes(tag)) ? 'unselected' : ''"
+                            :style="{
                             '--tag-bg-color': (tagsSelected.length && !tagsSelected.includes(tag)) ? 'gray' : colors[index],
                             animationDelay: `${(Math.floor(index / 4) * Math.random() * 1.2  + 0.5).toFixed(2)}s`,
                         }"
-                        @click="handleTagSelected(tag)"
-                    >
-                        {{ tag }}
+                            @click="handleTagSelected(tag)"
+                        >
+                            {{ tag }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,6 +251,7 @@ header {
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
+    position: relative;
 
     @media screen and (max-width: 767px) {
         flex-direction: column;
@@ -363,6 +366,11 @@ header {
     aside {
         width: 100%;
         flex: 2;
+
+        .aside-container {
+            position: sticky;
+            top: 100px;
+        }
 
         .categories-container {
             padding: 0 0 5px 0;
