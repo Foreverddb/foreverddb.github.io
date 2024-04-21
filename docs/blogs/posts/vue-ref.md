@@ -1313,7 +1313,7 @@ if (
 
 当副作用被触发，但副作用函数还未实际运行时，`_dirtyLevel`变为脏的，当副作用函数实际执行后则`_dirtyLevel`就不脏了。并且，仅当原来不脏的时候才会执行调度器（副作用函数的实际执行者）。
 
-这种设计在一般的响应式情况下并没有什么额外的作用，它的出现主要是用于帮助Vue3.4版本以后的计算属性避免不必要的副作用重新触发。我们将在下文计算属性部分进行详解。
+这种设计可以避免同一个副作用函数在某些情况的不必要重复执行（在渲染器中可以用来避免同一个副作用函数导致的反复渲染，详见[连续修改两个响应式变量会重新渲染几次？](#连续修改两个响应式变量会重新渲染几次)），它的出现另一个作用是用于帮助Vue3.4版本以后的**计算属性**避免不必要的副作用重新触发。我们将在下文计算属性部分进行详解。
 
 ## 响应式API的实现
 
@@ -1801,3 +1801,85 @@ if (effect.dirty) {
   a. 重新计算结果与原来相同，则什么也不做
   b. 重新计算结果与原来不同，改变`user._dirtyLevel`为`Dirty`
 4. `user.dirty`返回值，若计算结果改变，则返回应为`true`，执行`user`调度器。否则返回`false`，不执行调度器。
+
+### 一些常见的响应式问题
+
+#### 连续修改两个响应式变量会重新渲染几次？
+
+由于本文并不涉及到渲染相关的内容，因此直接给出`renderer`的实现：
+
+```typescript
+const effect = (instance.effect = new ReactiveEffect(
+    componentUpdateFn, 
+    NOOP, 
+    () => queueJob(update), 
+    instance.scope, // track it in component's effect scope
+))
+const update: SchedulerJob = (instance.update = () => {
+  if (effect.dirty) {
+    effect.run()
+  }
+})
+```
+
+可以看出渲染的本质便是通过`effect`来实现，渲染函数本身是一个`effect`，当依赖的响应式数据发生变化时，会被重新调用（渲染函数会返回新的`VNode`，然后使用`diff`算法来对比新旧`VNode`并修改对应DOM），而`effect`的调度器是`queueJob`，它会将`effect`推入调度器队列，当调度器队列执行时，会判断`effect.dirty`，若为`true`则执行`effect.run()`，否则不执行。
+
+我们查看`queueJob`的实现：
+
+```typescript
+export function queueJob(job: SchedulerJob) {
+  // the dedupe search uses the startIndex argument of Array.includes()
+  // by default the search index includes the current job that is being run
+  // so it cannot recursively trigger itself again.
+  // if the job is a watch() callback, the search will start with a +1 index to
+  // allow it recursively trigger itself - it is the user's responsibility to
+  // ensure it doesn't end up in an infinite loop.
+  if (
+          !queue.length ||
+          !queue.includes(
+                  job,
+                  isFlushing && job.allowRecurse ? flushIndex + 1 : flushIndex,
+          )
+  ) {
+    if (job.id == null) {
+      queue.push(job)
+    } else {
+      queue.splice(findInsertionIndex(job.id), 0, job)
+    }
+    queueFlush()
+  }
+}
+function queueFlush() {
+  if (!isFlushing && !isFlushPending) {
+    isFlushPending = true
+    currentFlushPromise = resolvedPromise.then(flushJobs)
+  }
+}
+```
+
+可以看出整体流程其实是将当前副作用的实际执行函数加入到`job`队列中，并使用`resolvedPromise`来保证其在下一个微任务中执行。当`flushJobs`执行时，会遍历`job`队列并执行其中的副作用函数执行。
+
+其实这里我们就可以知道，对响应式数据的修改是在主线程中进行的，它会先于微任务执行（这里实现了一个基于微任务的`tick`，即将所有的`DOM`操作缓存到一个`tick`中执行，避免频繁执行影响体验），因此实际上修改完所有的响应式数据才会开始重新渲染`DOM`。
+
+我们假设一个情况：
+
+```vue
+<template>
+  <div>{{ a }} {{ b }}</div>
+</template>
+<script setup>
+import { ref } from 'vue'
+
+const a = ref(1)
+const b = ref(2)
+
+setTimeout(() => {
+  a.value = 2
+  b.value = 3
+}, 1000)
+</script>
+```
+
+在例子中，当`a`修改时，会首先触发`trigger`，并正常将其渲染器的调度器推入调度器队列并执行，执行结果是导致`queueJob(update)`的执行，并没有直接执行渲染。而此前我们知道（在[dirty](#dirty)一节），在副作用函数触发但没有真正执行前，它的`_dirtyLevel`会被设置为`Dirty`，而在执行后会被设置为`NotDirty`。因此，当`b`修改时，由于`a`的触发，其副作用（指渲染函数）的`_dirtyLevel`为`Dirty`，但在执行后会被设置为`NotDirty`，因此不会再次执行渲染函数。而在`b`完成修改后，由于主线程已经执行完成，此时在微任务队列中的渲染函数会被执行，导致`DOM`的更新。
+
+因此，在这种情况下，连续修改两个响应式变量会重新渲染一次。
