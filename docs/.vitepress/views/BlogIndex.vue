@@ -399,7 +399,7 @@ header {
 
                     &:hover {
                         cursor: pointer;
-                        background-color: oklch(from var(--tag-bg-color) calc(l - 25) c h);
+                        background-color: oklch(from var(--tag-bg-color) calc(l - 0.25) c h);
                     }
                 }
 

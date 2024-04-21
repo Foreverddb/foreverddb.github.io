@@ -7,6 +7,7 @@ export default defineConfig({
   title: "DdB's Blog",
   description: "ForeverDdB's personal blog site",
   head: [["link", { rel: "icon", href: "/index.png" }]],
+  lastUpdated: true,
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -29,6 +30,12 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: [
+        {
+          find: /^.*\/VPDocFooterLastUpdated\.vue$/,
+          replacement: fileURLToPath(
+              new URL("./components/UpdateTime.vue", import.meta.url)
+          ),
+        },
         {
           find: /^.*\/VPFooter\.vue$/,
           replacement: fileURLToPath(new URL("./components/Footer.vue", import.meta.url)),
